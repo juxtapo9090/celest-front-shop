@@ -137,6 +137,46 @@ ignored.
 
 ---
 
+## Building the art yourself
+
+**The art is not in this repo, and that is deliberate.** The tileset is LimeZu's
+and its licence allows using and editing it in a project but forbids distributing
+it — so what ships here is the *pipeline*, not the pixels. Buy the pack (it costs
+about the same as a coffee), run two commands, and you get byte-identical art to
+what's on screen.
+
+Pack: **[LimeZu — Modern Interiors](https://limezu.itch.io/moderninteriors)**
+(complete v4.1.4). What's in the download, and what this project uses:
+
+| File | Used here |
+|---|---|
+| `moderninteriors-win.zip` | ✅ **This is the one.** The complete pack — interiors, animated objects, and the character generator layers. Everything below is cut from it. |
+| `Character Generator 2.0 Linux Build.zip` / `Character Generator 2.0 Setup.exe` | LimeZu's own GUI character maker. Not needed — `compose_character.py` composes from the raw layers instead, so characters are reproducible from code rather than clicked by hand. |
+| `Modern_Interiors_RPG_Maker_Version.zip` | RPG Maker export. Not used. |
+| `Modern_Interiors_Free_v2.2x.zip` | The free subset. Not enough for this room. |
+
+Then:
+
+```bash
+export MODERN_INTERIORS=/path/to/modern-interiors-full   # where you unpacked it
+python3 tools/cut_room_tiles.py     # floors and wall bands  -> sprites/room-tiles.png
+python3 tools/cut_objects.py        # furniture atlas        -> sprites/objects.png + .json
+python3 tools/compose_character.py  # a cast member          -> sprites/<name>-sheet.png
+```
+
+Run any of them without that variable set and they stop and tell you why, rather
+than half-building against a path that isn't there.
+
+`cut_objects.py` is the record of every prop in the room — re-run it to rebuild the
+atlas after adding one. `sprites/handmade/` is ours: a mop, a broom and a wall
+clock, hand-drawn at 16px in the pack's own palette, because after banding every
+row of every sheet at 5× it turned out none of the three exist anywhere in it.
+
+**Making your own room?** Fork it, buy the pack, and go. If you get stuck on the
+art pipeline or want to compare notes, open an issue — happy to help.
+
+---
+
 ## Credits
 
 Art is **LimeZu — "Modern Interiors"**, licensed, credit required; see
