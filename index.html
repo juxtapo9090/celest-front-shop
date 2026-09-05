@@ -1525,7 +1525,7 @@ function randomPresentAgent() {
 
 // occasionally rotate an agent's status to feel alive
 setInterval(function () {
-  if (MODE !== "live" || liveActive()) return;   // real calls set status; leave it alone
+  if (!SIMULATE || liveActive()) return;   // real calls set status; leave it alone
   var a = randomPresentAgent();
   if (!a) return;
   a.status = STATUS_POOL[Math.floor(Math.random() * STATUS_POOL.length)];
@@ -1823,7 +1823,7 @@ var eventLog = [];
 var MAX_EVENTS = 8;
 
 function pushEvent() {
-  if (MODE !== "live" || liveActive()) return;   // never invent a call on a public page
+  if (!SIMULATE || liveActive()) return;   // never invent a call on a public page
   var a = randomPresentAgent();
   if (!a) return;
   var t = EVENT_TEMPLATES[Math.floor(Math.random() * EVENT_TEMPLATES.length)];
@@ -1884,17 +1884,23 @@ function liveActive() {
 }
 
 // ---------------------------------------------------------------
-// Two worlds, decided by a probe, never by a guess.
+// Two questions, not one. They used to be answered by a single probe, and that
+// was fine while the only server in the world was the one at home.
 //
-//   LIVE     — a server is answering /events. Tool calls arrive as they happen.
-//   SNAPSHOT — no server (GitHub Pages). data/arena.json holds the room as it
-//              was when the publisher last ran, and the page says so on screen.
+//   MODE      where the DESKS come from — "live" (real tool calls arriving) or
+//             "snapshot" (data/arena.json, the room as it stood).
+//   RELAY     is anyone answering for PRESENCE — other visitors, and chat.
+//   SIMULATE  may the page invent tool calls to keep the room looking busy?
 //
-// In SNAPSHOT the simulated ticker stays OFF. A public page inventing tool
-// calls under real people's names is a lie with their name on it; a room that
-// breathes and does not pretend to be working is the honest version.
+// 🔴 Hosting the room made these come apart. A mojave service answers /events —
+// so the old single probe would have called it LIVE, switched the simulated
+// ticker on, and published invented tool calls under Fable's and Luc's real
+// names to the open internet. The desks there are a recording; the people in
+// the room are live. Both true at once, and only separate flags can say so.
 // ---------------------------------------------------------------
 var MODE = "probing";        // "live" | "snapshot"
+var RELAY = false;
+var SIMULATE = false;
 var SNAPSHOT_TS = 0;
 
 function applySnapshot(d) {
@@ -1918,6 +1924,13 @@ function applySnapshot(d) {
   while (eventLog.length > MAX_EVENTS) eventLog.shift();
 }
 
+function loadSnapshot() {
+  return fetch("data/arena.json?t=" + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(applySnapshot)
+    .catch(function () { /* no snapshot either — the room just idles */ });
+}
+
 function probeMode() {
   // relative on purpose: on Pages the app lives in a subdirectory, and an
   // absolute /events would probe the site root instead of the app.
@@ -1926,14 +1939,23 @@ function probeMode() {
     return r.json();
   }).then(function (d) {
     if (!d || !d.events) throw new Error("not the arena server");
-    MODE = "live";
+    RELAY = true;              // somebody is answering: visitors can meet
     liveMarker = d.next;
+    if (d.hosted) {
+      // A hosted room is somewhere the house's hooks do not post. Its desks are
+      // the published recording, and it never pretends otherwise.
+      MODE = "snapshot";
+      SIMULATE = false;
+      return loadSnapshot();
+    }
+    MODE = "live";
+    SIMULATE = true;           // home: the ticker fills the gaps between real calls
   }).catch(function () {
+    // Static files and nothing else — Pages, or a copy on a laptop.
+    RELAY = false;
     MODE = "snapshot";
-    return fetch("data/arena.json?t=" + Date.now())
-      .then(function (r) { return r.json(); })
-      .then(applySnapshot)
-      .catch(function () { /* no snapshot either — the room just idles */ });
+    SIMULATE = false;
+    return loadSnapshot();
   });
 }
 
@@ -1983,8 +2005,8 @@ setInterval(function () { if (MODE === "live") pollLive(); }, LIVE_POLL_MS);
 // ---------------------------------------------------------------
 // Chat — visitors talking from inside the room
 //
-// Skeleton on purpose: everyone on the WireGuard net shares one log, and your
-// own line floats over your head so the room is where you said it, not just a
+// Skeleton on purpose: everyone in the room shares one log, and your own line
+// floats over your head so the room is where you said it, not just a
 // sidebar. Piping a line out to abang when nobody has the tab open is a later
 // enhancement; right now a message nobody is watching is simply missed.
 // ---------------------------------------------------------------
@@ -2113,6 +2135,41 @@ function walkIn() {
   } catch (err) { /* private window — they just get asked again next time */ }
   doorEl.classList.remove("on");
   keys = {};                    // a key held while the card had focus never fires its keyup
+  standAtTheDoor();
+}
+
+// 🔴 Everyone used to arrive on the same tile. With one visitor that is a spawn
+// point; with two it is one body hiding another, and the room's whole new
+// feature reads as broken.
+//
+// The spots were not guessed. The page was asked, tile by tile, which floor is
+// standable AND has nothing drawing over it — and the second half of that is
+// the part that catches you out: an object sorts at y + 0.9, so the lounge
+// bench a whole row ABOVE the lane still paints over a body standing in it.
+// The doorway pocket (x 14.4–15.6, y ≈ 21.15) is the only floor down here that
+// is clear on both counts, so arrivals fill it first and then spill sideways
+// into the lane, right first — the left half of the lane is behind the bench.
+var DOOR_SPOTS = [
+  { x: 15.0, y: 21.15 }, { x: 14.5, y: 21.15 }, { x: 15.5, y: 21.15 },
+  { x: 16.6, y: 20.6 }, { x: 17.6, y: 20.6 }, { x: 18.6, y: 20.6 },
+  { x: 13.4, y: 20.6 }, { x: 12.4, y: 20.6 }, { x: 11.4, y: 20.6 }
+];
+function standAtTheDoor() {
+  for (var i = 0; i < DOOR_SPOTS.length; i++) {
+    var s = DOOR_SPOTS[i];
+    if (playerCanStandAt(s.x, s.y) && !someoneStandingAt(s.x, s.y)) {
+      player.x = s.x; player.y = s.y; player.facing = "up";
+      return;
+    }
+  }
+  // a genuinely full doorway: stand in it anyway and let them sort it out
+  player.x = DOOR_SPOTS[0].x; player.y = DOOR_SPOTS[0].y; player.facing = "up";
+}
+
+function someoneStandingAt(x, y) {
+  return Object.keys(PEERS).some(function (id) {
+    return Math.hypot(PEERS[id].x - x, PEERS[id].y - y) < 0.8;
+  });
 }
 
 document.getElementById("chatForm").addEventListener("submit", function (e) {
@@ -2147,7 +2204,7 @@ function pollChat() {
     });
   }).catch(function () { /* server down — the room just idles */ });
 }
-setInterval(function () { if (MODE === "live") pollChat(); }, CHAT_POLL_MS);
+setInterval(function () { if (RELAY) pollChat(); }, CHAT_POLL_MS);
 // The front panel shows on every load — a main menu — with the last name and
 // body already filled in, so a regular is one Enter away from the room.
 loadVisitor();
@@ -2168,23 +2225,145 @@ function pollTokens() {
     HOUSE.seen = true;
   }).catch(function () { /* server down — the board keeps its last number */ });
 }
-setInterval(function () { if (MODE === "live") pollTokens(); }, 60000);
+setInterval(function () { if (RELAY) pollTokens(); }, 60000);
 
-// One probe decides the world, then the room starts asking for things.
+// ---------------------------------------------------------------
+// Visitors meeting each other — the position relay
+//
+// Every tick you tell the server where you are standing and it hands back
+// everyone else. No sockets, no session, no join or leave message: a visitor
+// exists while they keep posting and stops existing when they stop. That means
+// a closed laptop cleans itself up, which is the whole reason it is shaped this
+// way — the alternative is a table of ghosts nobody can clear.
+//
+// 🔴 The server's word is a POSITION, not a MOVE. It arrives 5 times a second
+// and the screen draws 60, so a body placed straight onto the number it sent
+// teleports in visible steps. Each peer keeps a drawn position that chases its
+// reported one, and the chase — not the packet — is what animates the legs.
+// ---------------------------------------------------------------
+var RELAY_MS = 200;          // 5 posts a second: a walk, not a cursor
+// 🔴 The server already decides who is present (its own PEER_TTL). This second
+// number is ONLY a cushion for a couple of dropped fetches — measured at 10s it
+// stacked in series with the server's and a visitor who closed their laptop
+// stood in the room for eighteen seconds. Two timers guarding the same fact is
+// one timer too many; keep this one small.
+var PEER_GONE_MS = 2500;
+var PEER_CHASE = 9;          // how hard a drawn body pulls toward its report
+var PEERS = {};              // id -> a visitor shaped exactly like `player`
+var LAST_PEER_COUNT = -1;    // what the last relay reply actually contained
+
+// Per TAB, not per browser: two tabs are two visitors, which is also the only
+// way to test this alone.
+var MY_ID = (function () {
+  var k = "arena.peerid";
+  var v = null;
+  try { v = sessionStorage.getItem(k); } catch (e) { }
+  if (!v) {
+    v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    try { sessionStorage.setItem(k, v); } catch (e) { }
+  }
+  return v;
+})();
+
+function relayTick() {
+  if (!RELAY || !player.name) return;   // nobody who hasn't signed the door
+  var mine = (player.say && performance.now() < player.sayUntil) ? player.say : "";
+  fetch("/pos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: MY_ID,
+      name: player.name,
+      body: player.sheet.indexOf("visitor-f") >= 0 ? "f" : "m",
+      x: player.x, y: player.y,
+      facing: player.facing,
+      moving: player.moving,
+      say: mine
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.peers) applyPeers(d.peers); })
+    .catch(function () { /* relay down — you are simply alone again */ });
+}
+setInterval(relayTick, RELAY_MS);
+
+function applyPeers(list) {
+  var now = performance.now();
+  LAST_PEER_COUNT = list.length;
+  list.forEach(function (p) {
+    var v = PEERS[p.id];
+    if (!v) {
+      // A stranger appears where they say they are, not at the door: the first
+      // packet is a position, and easing in from a spawn point would walk them
+      // across the room in front of you for no reason.
+      v = PEERS[p.id] = {
+        x: p.x, y: p.y, animFrame: 0, animTimer: 0, moving: false,
+        frameW: 32, frameH: 64, frames: 6, scale: 1.0,
+        say: null, sayUntil: 0
+      };
+    }
+    v.tx = p.x; v.ty = p.y;
+    v.facing = p.facing;
+    v.reported = !!p.moving;
+    v.name = p.name;
+    v.sheet = p.body === "f" ? VISITOR_CAST[1].sheet : VISITOR_CAST[0].sheet;
+    v.seen = now;
+    if (p.say && p.say !== v.lastSay) {
+      v.lastSay = p.say;
+      v.say = p.say;
+      v.sayUntil = now + CHAT_SAY_MS;
+    } else if (!p.say) {
+      v.lastSay = "";
+    }
+  });
+}
+
+function updatePeers(dt) {
+  var now = performance.now();
+  Object.keys(PEERS).forEach(function (id) {
+    var v = PEERS[id];
+    if (now - v.seen > PEER_GONE_MS) { delete PEERS[id]; return; }
+
+    var dx = v.tx - v.x, dy = v.ty - v.y;
+    var dist = Math.hypot(dx, dy);
+    if (dist > 3) {                 // a jump this big is a reload, not a walk
+      v.x = v.tx; v.y = v.ty;
+    } else {
+      var k = Math.min(1, dt * PEER_CHASE);
+      v.x += dx * k;
+      v.y += dy * k;
+    }
+    // Legs move because the body is still catching up, not because a packet
+    // said so — a peer standing still with a stale `moving:true` would
+    // otherwise march on the spot.
+    v.moving = v.reported && dist > 0.02;
+    if (v.moving) {
+      v.animTimer += dt;
+      if (v.animTimer > 0.11) { v.animTimer = 0; v.animFrame = (v.animFrame + 1) % v.frames; }
+    } else {
+      v.animFrame = 0; v.animTimer = 0;
+    }
+  });
+}
+
+// The probe answers both questions, then the room asks for what it can have.
 probeMode().then(function () {
-  if (MODE === "live") { pollChat(); pollTokens(); }
-  // No server means no chat: there is nowhere for a message to go.
-  chatHandle.style.display = MODE === "live" ? "" : "none";
+  if (RELAY) { pollChat(); pollTokens(); relayTick(); }
+  // No relay means no chat: there is nowhere for a message to go.
+  chatHandle.style.display = RELAY ? "" : "none";
   var hint = document.getElementById("hint");
+  var hintKeys = "Arrow keys to move \u00b7 Enter/Space near an agent to talk"
+               + " \u00b7 E toggles edit mode";
   if (MODE === "live") {
-    hint.textContent = "Arrow keys to move \u00b7 Enter/Space near an agent to talk"
-                     + " \u00b7 E toggles edit mode \u00b7 \ud83d\udcac to chat";
+    hint.textContent = hintKeys + " \u00b7 \ud83d\udcac to chat";
   } else {
     var when = SNAPSHOT_TS
       ? new Date(SNAPSHOT_TS * 1000).toLocaleString()
       : "an unknown time";
-    hint.textContent = "Arrow keys to move \u00b7 SNAPSHOT \u2014 the house as it stood at "
-                     + when + ", not live";
+    // Two facts, said as two facts: the desks are a recording and the people
+    // are not. Rolling them into one word would make one of them a lie.
+    hint.textContent = (RELAY ? hintKeys + " \u00b7 \ud83d\udcac to chat \u00b7 " : "Arrow keys to move \u00b7 ")
+                     + "DESKS ARE A SNAPSHOT \u2014 the house as it stood at "
+                     + when + (RELAY ? ". Anyone else here is live." : ", not live");
   }
 });
 
@@ -2225,6 +2404,7 @@ pushEvent();
 var lastTime = performance.now();
 
 function update(dt) {
+  updatePeers(dt);
   var dx = 0, dy = 0;
   if (keys["ArrowUp"]) dy -= 1;
   if (keys["ArrowDown"]) dy += 1;
@@ -2367,26 +2547,31 @@ function drawAgent(a, now) {
   ctx.fillText(label, px, headY - 22);
 }
 
-function drawPlayer() {
-  var px = player.x * TILE;
-  var py = player.y * TILE;
+function drawPlayer() { drawVisitor(player, true); }
+
+// One draw for every visitor, yours and everyone else's, so a stranger can
+// never end up rendered by different code than you are — the bug where your own
+// body looks right and theirs does not is written out of existence here.
+function drawVisitor(v, mine) {
+  var px = v.x * TILE;
+  var py = v.y * TILE;
 
   ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.beginPath();
   ctx.ellipse(px, py + 12, 9, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  var bob = player.moving ? (player.animFrame % 3 === 1 ? -2 : 0) : 0;
-  var SH = player.frameH * player.scale;
+  var bob = v.moving ? (v.animFrame % 3 === 1 ? -2 : 0) : 0;
+  var SH = v.frameH * v.scale;
   var headY = py + bob + 16 - SH;   // feet on the tile, body grows upward
 
-  var sheet = sheetFor(player);
+  var sheet = sheetFor(v);
   if (sheet.complete && sheet.naturalWidth > 0) {
-    var row = SPRITE_DIR_ROW[player.facing] || 0;
-    ctx.drawImage(sheet, player.animFrame * player.frameW, row * player.frameH,
-                  player.frameW, player.frameH,
-                  px - player.frameW * player.scale / 2, headY,
-                  player.frameW * player.scale, SH);
+    var row = SPRITE_DIR_ROW[v.facing] || 0;
+    ctx.drawImage(sheet, v.animFrame * v.frameW, row * v.frameH,
+                  v.frameW, v.frameH,
+                  px - v.frameW * v.scale / 2, headY,
+                  v.frameW * v.scale, SH);
   } else {
     ctx.fillStyle = "#f4d58d";
     ctx.beginPath();
@@ -2394,21 +2579,24 @@ function drawPlayer() {
     ctx.fill();
   }
 
-  // your own plate, so a screenshot of the room says who was standing in it
-  if (player.name) {
+  // the plate, so a screenshot of the room says who was standing in it. Yours
+  // is purple and a stranger's is slate: with nine agent colours already taken
+  // and every visitor in the same hat, the plate is the only thing left that
+  // can say which body is the one your arrow keys move.
+  if (v.name) {
     ctx.font = "10px monospace";
     ctx.textAlign = "center";
-    var tagW = ctx.measureText(player.name).width + 8;
-    ctx.fillStyle = "rgba(155,89,182,0.75)";
+    var tagW = ctx.measureText(v.name).width + 8;
+    ctx.fillStyle = mine ? "rgba(155,89,182,0.75)" : "rgba(52,73,94,0.8)";
     ctx.fillRect(px - tagW / 2, headY - 14, tagW, 12);
     ctx.fillStyle = "#fff";
-    ctx.fillText(player.name, px, headY - 5);
+    ctx.fillText(v.name, px, headY - 5);
   }
 
-  // what you just said, over your own head
-  if (player.say && performance.now() < player.sayUntil) {
+  // what they just said, over their own head
+  if (v.say && performance.now() < v.sayUntil) {
     ctx.font = "10px 'Courier New', monospace";
-    var txt = player.say.length > 40 ? player.say.slice(0, 39) + "…" : player.say;
+    var txt = v.say.length > 40 ? v.say.slice(0, 39) + "…" : v.say;
     var w = ctx.measureText(txt).width + 12;
     var bx = px - w / 2, by = py + bob - 34;
     ctx.fillStyle = "rgba(10,10,16,0.92)";
@@ -2421,8 +2609,8 @@ function drawPlayer() {
     ctx.textAlign = "center";
     ctx.fillText(txt, px, by + 11);
     ctx.textAlign = "left";
-  } else if (player.say) {
-    player.say = null;
+  } else if (v.say) {
+    v.say = null;
   }
 }
 
@@ -2759,6 +2947,10 @@ function render(now) {
     drawables.push({ y: a.y + (onFurniture ? 1.0 : 0), fn: function () { drawAgent(a, now); } });
   });
   drawables.push({ y: player.y, fn: drawPlayer });
+  Object.keys(PEERS).forEach(function (id) {
+    var v = PEERS[id];
+    drawables.push({ y: v.y, fn: function () { drawVisitor(v, false); } });
+  });
   NPCS.forEach(function (npc) {
     drawables.push({ y: npc.y, fn: function () { drawNpcSprite(npc, now); } });
   });

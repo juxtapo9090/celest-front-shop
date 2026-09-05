@@ -1,0 +1,3 @@
+# Deliberately empty. server.py is stdlib only — http.server, socketserver,
+# json, threading. Nothing to install means nothing to break on a cold start,
+# and the room comes up in one process.
