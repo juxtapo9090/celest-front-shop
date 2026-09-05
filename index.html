@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CelestJux Front Shop</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; background: #0d0f14; color: #d8dee9;
+    font-family: 'Courier New', monospace;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column;
+  }
+  #wrap { position: relative; width: 960px; margin-top: 16px; transition: transform 0.18s ease-out; }
+  /* The panel hangs off the right edge, so on an ordinary window it lands past
+     the viewport — send button off screen, log clipped mid-word. Shift the room
+     left by half the panel while it is open and the pair stays centered. */
+  #wrap.chatopen { transform: translateX(-131px); }
+  canvas { image-rendering: pixelated; border: 3px solid #3a3f4b; display: block; background: #000; }
+  #title { font-size: 14px; letter-spacing: 2px; color: #9b59b6; margin-bottom: 4px; }
+  #hint { font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center; }
+
+  /* Chat hangs OUTSIDE the canvas, off the right edge — the bottom-right of the
+     room is Ox's door, and the whole design says you have to go looking for him.
+     A panel parked on top of it would take that away. */
+  #chatPanel {
+    position: absolute; top: 0; left: 100%; height: 704px; width: 260px;
+    margin-left: 3px;
+    background: #12151c; border: 3px solid #3a3f4b; border-left: none;
+    display: flex; flex-direction: column;
+    transform: translateX(-100%); opacity: 0; pointer-events: none;
+    transition: transform 0.18s ease-out, opacity 0.18s ease-out;
+  }
+  #chatPanel.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  #chatHandle {
+    position: absolute; top: 12px; left: 100%; margin-left: 3px;
+    background: #12151c; color: #9b59b6;
+    border: 3px solid #3a3f4b; border-left: none;
+    font-family: inherit; font-size: 16px; padding: 8px 6px; cursor: pointer;
+    line-height: 1;
+  }
+  #chatHandle:hover { color: #d8dee9; }
+  #chatHandle .badge {
+    display: none; position: absolute; top: -6px; right: -6px;
+    background: #e74c3c; color: #fff; border-radius: 8px;
+    font-size: 9px; padding: 1px 4px;
+  }
+  #chatHandle.unread .badge { display: block; }
+  #chatTitle {
+    font-size: 11px; letter-spacing: 2px; color: #9b59b6;
+    padding: 8px 10px; border-bottom: 1px solid #2a2f3b;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #chatTitle button {
+    background: none; border: none; color: #6b7280; cursor: pointer;
+    font-family: inherit; font-size: 13px;
+  }
+  #chatLog { flex: 1; overflow-y: auto; padding: 8px 10px; font-size: 11px; line-height: 1.5; word-wrap: break-word; }
+  #chatLog .who { color: #f1c40f; }
+  #chatLog .me .who { color: #1abc9c; }
+  #chatLog .sys { color: #6b7280; font-style: italic; }
+  #chatForm { display: flex; border-top: 1px solid #2a2f3b; }
+  #chatInput {
+    flex: 1; background: #0d0f14; border: none; color: #d8dee9;
+    font-family: inherit; font-size: 11px; padding: 9px 10px; outline: none;
+  }
+  #chatForm button {
+    background: #1a1e28; border: none; border-left: 1px solid #2a2f3b;
+    color: #9b59b6; font-family: inherit; font-size: 11px;
+    padding: 0 12px; cursor: pointer;
+  }
+  /* Door — the front panel a stranger meets before the room. Solo is real;
+     host and join wait for a server, and say so instead of pretending. */
+  #door {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    background: rgba(10, 12, 18, 0.94);
+    align-items: center; justify-content: center;
+  }
+  #door.on { display: flex; }
+  #doorCard {
+    width: 420px; background: #12151d; border: 1px solid #2a2f3b; border-radius: 8px;
+    padding: 24px 28px 26px; text-align: center; color: #d8dee9;
+    font-family: ui-monospace, Menlo, monospace;
+    box-shadow: 0 0 0 4px #0d0f14, 0 0 40px rgba(155, 89, 182, 0.25);
+  }
+  #doorKicker { font-size: 9px; letter-spacing: 2px; color: #9b59b6; margin-bottom: 8px; }
+  #doorCard h2 { margin: 0 0 8px; font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+  #doorCard p { margin: 0 0 14px; font-size: 11px; line-height: 1.5; color: #8a93a3; }
+  #doorKeys { display: flex; justify-content: center; gap: 16px; margin-bottom: 18px; font-size: 10px; color: #6b7280; }
+  #doorKeys b { color: #d8dee9; font-weight: normal; margin-left: 6px; }
+  #doorName {
+    width: 100%; box-sizing: border-box; background: #0d0f14; border: 1px solid #2a2f3b;
+    color: #d8dee9; font-family: inherit; font-size: 13px; padding: 9px 10px;
+    outline: none; margin-bottom: 16px; text-align: center; letter-spacing: 1px;
+  }
+  #doorName:focus { border-color: #9b59b6; }
+  #doorCast { display: flex; gap: 14px; justify-content: center; margin-bottom: 18px; }
+  #doorCast button {
+    background: #0d0f14; border: 2px solid #2a2f3b; border-radius: 6px;
+    padding: 8px; cursor: pointer; line-height: 0;
+  }
+  #doorCast button.sel { border-color: #9b59b6; }
+  #doorCast canvas { image-rendering: pixelated; width: 64px; height: 128px; }
+  #doorModes { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+  #doorModes button {
+    flex: 1; background: #0d0f14; border: 1px solid #2a2f3b; border-radius: 4px;
+    color: #8a93a3; font-family: inherit; font-size: 11px; letter-spacing: 1px;
+    padding: 8px 0; cursor: pointer;
+  }
+  #doorModes button.sel { border-color: #9b59b6; color: #fff; }
+  #doorModes button:disabled { color: #3a3f4b; cursor: default; }
+  #doorModes button:disabled::after { content: " ·soon"; font-size: 8px; letter-spacing: 0; }
+  #doorGo {
+    width: 100%; background: #9b59b6; border: none; border-radius: 4px; color: #fff;
+    font-family: inherit; font-size: 13px; letter-spacing: 2px; padding: 11px 0; cursor: pointer;
+  }
+  #doorGo:disabled { background: #2a2f3b; color: #6b7280; cursor: default; }
+</style>
+</head>
+<body>
+<div id="title">🕹️ CELESTJUX FRONT SHOP</div>
+<div id="wrap">
+  <canvas id="game" width="960" height="704"></canvas>
+  <button id="chatHandle" title="Chat">💬<span class="badge">!</span></button>
+  <div id="chatPanel">
+    <div id="chatTitle"><span>CHAT</span><button id="chatClose">✕</button></div>
+    <div id="chatLog"></div>
+    <form id="chatForm" autocomplete="off">
+      <input id="chatInput" maxlength="240" placeholder="say something...">
+      <button type="submit">send</button>
+    </form>
+  </div>
+</div>
+<div id="hint">Arrow keys to move · Enter/Space near an agent to talk · E toggles edit mode · 💬 to chat</div>
+
+<div id="door"><div id="doorCard">
+  <div id="doorKicker">▶ NINE AGENTS, ONE HOUSE, REAL TOOL CALLS</div>
+  <h2>CelestJux Front Shop</h2>
+  <p>Walk in and watch them work. Every desk lights up off a real tool call;
+     the couch fills when the house goes quiet.</p>
+  <div id="doorKeys">
+    <span>← ↑ ↓ →<b>MOVE</b></span><span>ENTER<b>TALK</b></span><span>💬<b>CHAT</b></span>
+  </div>
+  <input id="doorName" maxlength="16" placeholder="your name" autocomplete="off">
+  <div id="doorCast"></div>
+  <div id="doorModes">
+    <button class="sel">SOLO</button>
+    <button disabled title="needs a server — soon">HOST</button>
+    <button disabled title="needs a server — soon">JOIN</button>
+  </div>
+  <button id="doorGo" disabled>LAUNCH</button>
+</div></div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------
+var TILE = 32;
+var COLS = 30;
+var ROWS = 22;
+var CANVAS_W = COLS * TILE; // 960
+var CANVAS_H = ROWS * TILE; // 704
+
+var canvas = document.getElementById("game");
+var ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+// ---------------------------------------------------------------
+// Tile types — the map is now walls + floor + doors only.
+// All furniture lives in OBJECTS.
+// ---------------------------------------------------------------
+var T_FLOOR = 0;
+var T_WALL = 1;
+var T_DOOR = 5;
+
+var SOLID = {};
+SOLID[T_WALL] = true;
+
+// ---------------------------------------------------------------
+// Build the room layout
+// map[row][col]
+//
+// The floor is one open hall with two real rooms cut out of the bottom
+// corners: the pantry on the left, Ox's utility room on the right. Both have
+// their own door, so there is somewhere the camera cannot see from the
+// entrance — which was the whole point of making them rooms.
+// ---------------------------------------------------------------
+var PANTRY = { x0: 1, x1: 7, y0: 15, y1: 20, wallX: 8, doorY: [17, 18] };
+var OXROOM = { x0: 23, x1: 28, y0: 15, y1: 20, wallX: 22, doorY: [17, 18] };
+var PARTITION_ROWS = [13, 14];   // interior walls are 2 rows tall, same as the outer band
+
+function buildMap() {
+  var map = [];
+  for (var y = 0; y < ROWS; y++) {
+    var row = [];
+    for (var x = 0; x < COLS; x++) {
+      // the top wall is TWO rows tall: LimeZu walls come as an upper band and a
+      // lower band with the skirting, and one row of it reads as a stripe.
+      var edge = (x === 0 || y <= 1 || x === COLS - 1 || y === ROWS - 1);
+      row.push(edge ? T_WALL : T_FLOOR);
+    }
+    map.push(row);
+  }
+
+  // the two rooms' top walls
+  PARTITION_ROWS.forEach(function (y) {
+    for (var x = 0; x <= PANTRY.wallX; x++) map[y][x] = T_WALL;
+    for (var x2 = OXROOM.wallX; x2 < COLS; x2++) map[y][x2] = T_WALL;
+  });
+
+  // and their side walls, each with a doorway punched through
+  for (var y = PARTITION_ROWS[1]; y < ROWS; y++) {
+    map[y][PANTRY.wallX] = T_WALL;
+    map[y][OXROOM.wallX] = T_WALL;
+  }
+  PANTRY.doorY.forEach(function (y) { map[y][PANTRY.wallX] = T_DOOR; });
+  OXROOM.doorY.forEach(function (y) { map[y][OXROOM.wallX] = T_DOOR; });
+
+  // entry door — bottom centre, between the two rooms
+  var doorX = Math.floor(COLS / 2);
+  map[ROWS - 1][doorX] = T_DOOR;
+  map[ROWS - 1][doorX - 1] = T_DOOR;
+
+  return map;
+}
+
+var MAP = buildMap();
+
+function tileTypeAt(col, row) {
+  if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return T_WALL;
+  return MAP[row][col];
+}
+
+// ---------------------------------------------------------------
+// Object layer
+// Each entry: { id, type, x, y, solid, owner? }  — x/y in tile coords
+// ---------------------------------------------------------------
+var OBJECT_TYPES = ["desk", "pc", "chair", "plant", "shelf", "bed", "rug", "lamp", "poster",
+                    "rack", "screens", "cabinet", "coffee"];
+
+var SOLID_BY_TYPE = {
+  desk: true,
+  pc: true,
+  chair: false,
+  plant: true,
+  shelf: true,
+  bed: true,
+  rug: false,
+  lamp: false,
+  poster: false,
+  rack: true,
+  screens: true,
+  cabinet: true,
+  coffee: false,
+  prop: true,
+  blocker: true
+};
+
+// how far down an object's "footing" sits, for depth sorting against agents.
+// chairs/posters sit low so an agent seated on the tile draws in front of them
+// — a chair drawn over its sitter hides them completely, the sprite is tall.
+var DEPTH_OFFSET = {
+  chair: 0.2,
+  poster: 0.1,
+  desk: 0.9,
+  pc: 0.9,
+  plant: 0.9,
+  shelf: 0.9,
+  bed: 0.9,
+  lamp: 0.9,
+  rack: 0.9,
+  screens: 0.9,
+  cabinet: 0.9,
+  coffee: 0.95,
+  prop: 0.9
+};
+
+var nextObjId = 1;
+
+function makeObject(type, x, y, owner) {
+  return {
+    id: "obj" + (nextObjId++),
+    type: type,
+    x: x,
+    y: y,
+    solid: !!SOLID_BY_TYPE[type],
+    owner: owner || null
+  };
+}
+
+// Office layout. A desk's ART is ~3.5 tiles wide but an object only owns one
+// tile, so each station lays invisible "blocker" tiles across the rest of its
+// footprint — otherwise you walk straight through the table.
+//
+// Anything that is just furniture is a "prop": one type, the atlas sprite name
+// carried on the object. Adding a chair variant should not need a new type.
+function prop(art, x, y, solid) {
+  var o = makeObject("prop", x, y);
+  o.art = art;
+  if (solid === false) o.solid = false;
+  return o;
+}
+
+function defaultObjects() {
+  var objs = [];
+
+  function blockers(x0, x1, y) {
+    for (var x = x0; x <= x1; x++) objs.push(makeObject("blocker", x, y));
+  }
+
+  // --- the eight desks: four pods, two seats side by side in each -------
+  // Side by side, not facing: a status bubble sits above a head, and a facing
+  // pair stacks its two bubbles into each other.
+  var pods = [
+    { y: 5,  seats: [{ x: 2, owner: "Monica" },  { x: 6, owner: "Luc" }] },
+    { y: 5,  seats: [{ x: 14, owner: "Fable" },  { x: 18, owner: "Umbra" }] },
+    { y: 11, seats: [{ x: 2, owner: "Juxtapo" }, { x: 6, owner: "Rogue" }] },
+    { y: 11, seats: [{ x: 14, owner: "Celeste" }, { x: 18, owner: "Symphony" }] }
+  ];
+  pods.forEach(function (pod) {
+    pod.seats.forEach(function (s) {
+      objs.push(makeObject("desk", s.x, pod.y));
+      blockers(s.x + 1, s.x + 3, pod.y);
+      objs.push(makeObject("pc", s.x + 2, pod.y, s.owner));
+      objs.push(makeObject("chair", s.x + 2, pod.y + 1));
+    });
+  });
+
+  // --- the back wall ----------------------------------------------------
+  objs.push(makeObject("screens", 9, 2));
+  blockers(10, 12, 2);
+  objs.push(prop("wall_clock", 25, 1, false));     // hand-drawn: the pack has none
+
+  // whiteboard hung on the back wall, beside the screen bank
+  objs.push(prop("whiteboard", 15, 2, false));
+
+  // server column down the right wall of the hall
+  objs.push(prop("server_rack", 28, 5));
+  objs.push(prop("server_rack", 28, 8));
+  objs.push(prop("server_rack", 28, 11));
+
+  // --- lounge: the middle of the room, nobody's territory ---------------
+  // The pack has no armchair and no coffee table (swept, twice) — it fills the
+  // living-room centrepiece role with a rug. So: two sofas, a bench, a rug.
+  var loungeRug = makeObject("rug", 12, 19);
+  loungeRug.art = "rug_blue";
+  objs.push(loungeRug);
+  objs.push(prop("sofa_3", 12, 17));
+  blockers(13, 14, 17);
+  objs.push(prop("bench", 13, 20, false));
+  objs.push(prop("sofa_2", 17, 18));
+  blockers(18, 18, 18);
+  // Second 2-seater on the left, mirroring the right one across the rug. Seven
+  // seats for nine agents meant two always lost and stood around looking
+  // squeezed, which reads as a bug rather than as a full room.
+  objs.push(prop("sofa_2", 9, 18));
+  blockers(10, 10, 18);
+  objs.push(prop("bookshelf", 19, 16));
+  blockers(20, 20, 16);
+  objs.push(prop("floor_lamp", 11, 16, false));
+  objs.push(prop("ottoman", 16, 20, false));
+  objs.push(prop("stool", 18, 20, false));
+  objs.push(prop("stool", 19, 20, false));
+
+  // --- pantry: a room you walk into, not a corner -----------------------
+  objs.push(prop("counter_left", 1, 15));
+  objs.push(prop("counter_mid", 2, 15));
+  objs.push(prop("counter_mid", 3, 15));
+  objs.push(prop("counter_right", 4, 15));
+  objs.push(makeObject("coffee", 2, 15));          // animated espresso on the counter
+  objs.push(prop("microwave", 4, 15, false));
+  objs.push(prop("fridge", 7, 15));
+  objs.push(prop("cafe_table", 3, 18, false));
+  objs.push(prop("mug", 3, 18, false));
+  objs.push(prop("stool", 2, 19, false));
+  objs.push(prop("stool", 5, 18, false));
+  objs.push(prop("wall_clock", 6, 14, false));
+
+  // --- Ox's room: the butler's own corner, out of sight from the door ---
+  objs.push(prop("shelving_end", 23, 16));
+  objs.push(prop("shelving_mid", 25, 16));
+  objs.push(prop("toolrack_hammer", 27, 15, false));
+  objs.push(prop("work_table", 27, 18));
+  objs.push(prop("locker", 28, 16));
+  objs.push(prop("safe", 28, 20));
+  objs.push(prop("sink", 23, 20));
+  blockers(24, 24, 20);
+  objs.push(prop("crates", 26, 20));
+  objs.push(prop("boxes_stack", 25, 20, false));
+  objs.push(prop("mop", 24, 18, false));           // hand-drawn: the pack has none
+  objs.push(prop("mop_bucket", 25, 18, false));
+  objs.push(prop("wet_floor_sign", 26, 16, false));
+
+  // --- greenery and filing, to break up the long walls ------------------
+  objs.push(makeObject("cabinet", 1, 8));
+  objs.push(makeObject("cabinet", 1, 9));
+  objs.push(prop("plant_palm", 1, 4));
+  objs.push(prop("plant_large", 22, 8));
+  objs.push(prop("plant_small", 11, 8, false));
+  objs.push(prop("plant_small", 21, 12, false));
+  objs.push(prop("equip_cabinet", 24, 5));         // fills the bay beside the racks
+  blockers(25, 25, 5);
+  objs.push(prop("filing_cabinet", 24, 10));
+  objs.push(prop("filing_cabinet", 25, 10));
+
+  return objs;
+}
+
+var OBJECTS = defaultObjects();
+
+function objectsAt(col, row) {
+  return OBJECTS.filter(function (o) { return o.x === col && o.y === row; });
+}
+
+function topObjectAt(col, row) {
+  var hits = objectsAt(col, row);
+  return hits.length ? hits[hits.length - 1] : null;
+}
+
+function solidObjectAt(col, row) {
+  for (var i = 0; i < OBJECTS.length; i++) {
+    var o = OBJECTS[i];
+    if (o.solid && o.x === col && o.y === row && o !== dragging) return true;
+  }
+  return false;
+}
+
+// collision: tile map AND solid objects
+function isSolidTile(col, row) {
+  if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return true;
+  if (SOLID[MAP[row][col]]) return true;
+  return solidObjectAt(col, row);
+}
+
+// ---------------------------------------------------------------
+// Tile rendering (floor / wall / door only)
+// sprites/room-tiles.png: [0] floor, [1] wall upper, [2] wall lower (with
+// skirting), [3] side slab — plain wall body, no trim.
+//
+// Only a wall with open floor directly beneath it is being seen face-on; that
+// one gets the real band. Every other wall edge — the side walls, the bottom
+// of the room, the partitions between the pantry and the hall — gets the slab,
+// because tiling a horizontal band down a vertical wall repeats its ceiling
+// trim every 32px and the whole edge reads as venetian blinds.
+// ---------------------------------------------------------------
+var roomTiles = new Image();
+roomTiles.src = "sprites/room-tiles.png?v=" + Date.now();
+
+function wallSlot(tx, ty) {
+  var below = (ty + 1 < ROWS) ? MAP[ty + 1][tx] : T_WALL;
+  if (!SOLID[below]) return 2;              // face-on: the band with the skirting
+  if (ty === ROWS - 1) return 3;            // outer bottom edge — seen from above
+  var left = (tx > 0) ? MAP[ty][tx - 1] : T_WALL;
+  var right = (tx + 1 < COLS) ? MAP[ty][tx + 1] : T_WALL;
+  if (!SOLID[left] || !SOLID[right]) return 3;   // a vertical run, seen edge-on
+  return 1;                                 // wall stacked on wall: upper band
+}
+
+function drawTile(type, px, py, tx, ty) {
+  var ready = roomTiles.complete && roomTiles.naturalWidth > 0;
+
+  switch (type) {
+    case T_WALL:
+      if (ready) {
+        ctx.drawImage(roomTiles, wallSlot(tx, ty) * 32, 0, 32, 32, px, py, TILE, TILE);
+        break;
+      }
+      ctx.fillStyle = "#5a4a3a";
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.fillStyle = "#6f5c48";
+      ctx.fillRect(px, py, TILE, 6);
+      ctx.strokeStyle = "#3d3226";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+      break;
+    case T_DOOR:
+      if (ready) ctx.drawImage(roomTiles, 0, 0, 32, 32, px, py, TILE, TILE);
+      else { ctx.fillStyle = "#3d5a3d"; ctx.fillRect(px, py, TILE, TILE); }
+      ctx.fillStyle = "#8a6a3f";
+      ctx.fillRect(px + 4, py, TILE - 8, TILE - 4);
+      ctx.fillStyle = "#c9a35f";
+      ctx.fillRect(px + 6, py + 2, TILE - 12, TILE - 8);
+      break;
+    default: // floor
+      if (ready) {
+        ctx.drawImage(roomTiles, 0, 0, 32, 32, px, py, TILE, TILE);
+        break;
+      }
+      ctx.fillStyle = "#3d5a3d";
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.strokeStyle = "#33502f";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+  }
+}
+
+function drawMap() {
+  for (var y = 0; y < ROWS; y++) {
+    for (var x = 0; x < COLS; x++) {
+      drawTile(MAP[y][x], x * TILE, y * TILE, x, y);
+    }
+  }
+}
+
+// ---------------------------------------------------------------
+// Object atlas — real furniture cut out of the LimeZu pack by
+// tools/cut_objects.py; sprites/objects.json names each rect.
+// Everything still falls back to the hand-drawn rectangles when the atlas is
+// missing, so the room never renders empty.
+// ---------------------------------------------------------------
+var objAtlas = new Image();
+objAtlas.src = "sprites/objects.png?v=" + Date.now();
+var OBJ_MANIFEST = null;
+
+fetch("sprites/objects.json?v=" + Date.now())
+  .then(function (r) { return r.json(); })
+  .then(function (m) { OBJ_MANIFEST = m; })
+  .catch(function () { /* no atlas yet — rectangles it is */ });
+
+// which atlas sprite each object type wears; an object may override with o.art
+var ART_FOR = {
+  desk: "desk_large",
+  pc: "monitor",
+  chair: "chair_up",
+  plant: "plant_large",
+  rug: "rug_red",
+  rack: "server_rack",
+  screens: "screen_wall",
+  cabinet: "filing_cabinet",
+  coffee: "coffee"
+};
+
+// LimeZu furniture is drawn top-down WITH height, so a piece is often 1x2 or
+// 1x3 tiles tall. A sprite is anchored by its BASE — it sits on the object's
+// tile and grows upward, and rightward when wider than one tile.
+function drawAtlasSprite(name, px, py, frame) {
+  if (!OBJ_MANIFEST || !objAtlas.complete || !objAtlas.naturalWidth) return false;
+  var s = OBJ_MANIFEST.sprites[name];
+  if (!s) return false;
+  var f = 0;
+  if (s.frames > 1) f = ((frame | 0) % s.frames + s.frames) % s.frames;
+  ctx.drawImage(objAtlas, s.x + f * s.w, s.y, s.w, s.h,
+                px, py + TILE - s.h, s.w, s.h);
+  return true;
+}
+
+// ---------------------------------------------------------------
+// Object sprites — atlas art where we have it, rectangles where we don't
+// ---------------------------------------------------------------
+// How hard the whole room is working, 0..1 — the mean load across everyone
+// who is actually here. The server racks run off this, so the right-hand wall
+// breathes with the house instead of on a clock of its own.
+function houseLoad() {
+  var sum = 0, n = 0;
+  for (var i = 0; i < AGENTS.length; i++) {
+    if (AGENTS[i].away) continue;
+    sum += AGENTS[i].load;
+    n++;
+  }
+  return n ? sum / n : 0;
+}
+
+function drawObjectSprite(o, px, py, now) {
+  if (o.type === "blocker") return;   // collision only, nothing to draw
+
+  var art = o.art || ART_FOR[o.type] || null;
+  if (art) {
+    // a screen only animates while its owner is actually working
+    var frame = 0;
+    if (o.type === "pc") {
+      var ow = o.owner ? agentByName(o.owner) : null;
+      var act = ow ? ow.activity : 0;
+      if (act > 0.05) frame = Math.floor(now / 1000 * (4 + 8 * act));
+    } else if (art === "server_rack") {
+      // idle racks tick over slowly; a busy house makes them chatter
+      frame = Math.floor(now / 1000 * (1.5 + 14 * houseLoad()));
+    } else {
+      frame = Math.floor(now / 1000 * 4);
+    }
+    if (drawAtlasSprite(art, px, py, frame)) return;
+  }
+
+  switch (o.type) {
+    case "desk":
+      ctx.fillStyle = "#8a5a2f";
+      ctx.fillRect(px + 2, py + 10, TILE - 4, TILE - 14);
+      ctx.strokeStyle = "#5c3a1c";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 2.5, py + 10.5, TILE - 5, TILE - 15);
+      break;
+
+    case "pc":
+      ctx.fillStyle = "#8a5a2f";
+      ctx.fillRect(px + 2, py + 10, TILE - 4, TILE - 14);
+      ctx.fillStyle = "#222";
+      ctx.fillRect(px + 8, py + 4, 16, 12);
+      var owner = o.owner ? agentByName(o.owner) : null;
+      var lit = owner ? owner.activity : 0;
+      ctx.fillStyle = "#4fd1ff";
+      ctx.fillRect(px + 10, py + 6, 12, 8);
+      if (lit > 0.05) {
+        ctx.fillStyle = "rgba(255,255,255," + (0.55 * lit).toFixed(2) + ")";
+        ctx.fillRect(px + 10, py + 6, 12, 8);
+      }
+      break;
+
+    case "chair":
+      ctx.fillStyle = "#444";
+      ctx.fillRect(px + 8, py + 8, 16, 16);
+      ctx.fillStyle = "#666";
+      ctx.fillRect(px + 8, py + 4, 16, 6);
+      break;
+
+    case "plant":
+      ctx.fillStyle = "#6b4226";
+      ctx.fillRect(px + 10, py + 20, 12, 10);
+      ctx.fillStyle = "#2f8f3f";
+      ctx.beginPath();
+      ctx.arc(px + 16, py + 14, 11, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case "shelf":
+      ctx.fillStyle = "#5c3a1c";
+      ctx.fillRect(px + 2, py + 2, TILE - 4, TILE - 4);
+      ctx.fillStyle = "#c0392b";
+      ctx.fillRect(px + 5, py + 5, 6, 10);
+      ctx.fillStyle = "#2980b9";
+      ctx.fillRect(px + 12, py + 5, 6, 10);
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillRect(px + 19, py + 5, 6, 10);
+      break;
+
+    case "bed":
+      // dark frame, pillow at the top, blanket over the lower half
+      ctx.fillStyle = "#3b3f4a";
+      ctx.fillRect(px + 3, py + 2, TILE - 6, TILE - 4);
+      ctx.strokeStyle = "#22262e";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 3.5, py + 2.5, TILE - 7, TILE - 5);
+      ctx.fillStyle = "#e8e6e1";
+      ctx.fillRect(px + 6, py + 4, TILE - 12, 7);
+      ctx.fillStyle = "#7f4fa8";
+      ctx.fillRect(px + 5, py + 13, TILE - 10, TILE - 17);
+      ctx.strokeStyle = "#5d3880";
+      ctx.strokeRect(px + 5.5, py + 13.5, TILE - 11, TILE - 18);
+      break;
+
+    case "rug":
+      ctx.fillStyle = "rgba(180, 90, 120, 0.35)";
+      ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+      ctx.strokeStyle = "rgba(230, 170, 190, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 3.5, py + 3.5, TILE - 7, TILE - 7);
+      break;
+
+    case "lamp":
+      // warm glow pool first, then the stand
+      ctx.fillStyle = "rgba(255, 214, 130, 0.18)";
+      ctx.beginPath();
+      ctx.arc(px + 16, py + 14, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#5a5a5a";
+      ctx.fillRect(px + 14, py + 14, 4, 14);
+      ctx.fillStyle = "#3f3f3f";
+      ctx.fillRect(px + 10, py + 27, 12, 3);
+      ctx.fillStyle = "#ffd782";
+      ctx.beginPath();
+      ctx.arc(px + 16, py + 10, 7, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case "poster":
+      ctx.fillStyle = "#2f3b52";
+      ctx.fillRect(px + 5, py + 4, TILE - 10, TILE - 12);
+      ctx.fillStyle = "#e8b04b";
+      ctx.fillRect(px + 8, py + 7, TILE - 16, 7);
+      ctx.fillStyle = "#7fd4ff";
+      ctx.fillRect(px + 8, py + 16, TILE - 16, 4);
+      ctx.strokeStyle = "#151a24";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 5.5, py + 4.5, TILE - 11, TILE - 13);
+      break;
+
+    default:
+      ctx.fillStyle = "#888";
+      ctx.fillRect(px + 8, py + 8, 16, 16);
+  }
+}
+
+// ---------------------------------------------------------------
+// NPC Agents — nine seats. Colours match the sprite each one wears, because
+// the colour is what the cable, the bubble border and the minimap dot use.
+//
+// Umbra has a desk and is never at it: she is a field agent, summoned, walks
+// in, leaves. Fable sits across from an empty chair almost always, and that is
+// the point — the only desk in the room that means something by being empty.
+// Ox is the butler and has no desk at all; he putters in his own room.
+// Kim and Zet are excluded — rootsys is down, they cannot be used.
+// ---------------------------------------------------------------
+function seat(name, model, color, status, extra) {
+  var a = { name: name, model: model, color: color, status: status,
+            sheet: "sprites/" + name.toLowerCase() + "-sheet.png",
+            frameW: 32, frameH: 64, frames: 6, scale: 1.0 };
+  if (extra) for (var k in extra) a[k] = extra[k];
+  return a;
+}
+
+var AGENTS = [
+  seat("Celeste",  "opus",   "#9b59b6", "thinking..."),
+  seat("Fable",    "fable",  "#e74c3c", "building..."),
+  seat("Luc",      "gpt",    "#2ecc71", "idle"),
+  seat("Monica",   "sonnet", "#e67e22", "reading..."),
+  seat("Rogue",    "opus",   "#c0392b", "editing..."),
+  seat("Symphony", "opus",   "#e8b4b8", "idle"),
+  seat("Juxtapo",  "opus",   "#1abc9c", "thinking..."),
+  seat("Umbra",    "haiku",  "#e84393", "idle",  { away: false, fieldAgent: true,
+                                                   wanderState: "idle", jobUntil: 0 }),
+  seat("Ox",       "haiku",  "#3498db", "idle",  { butler: true })
+];
+
+// ---------------------------------------------------------------
+// Test NPC — teal-robed wanderer with pixel sprite + roaming AI
+// ---------------------------------------------------------------
+var TEST_NPC = {
+  name: "Wanderer",
+  color: "#1abc9c",
+  sheet: "sprites/wanderer-gemini-sheet.png",
+  frameW: 32, frameH: 32, frames: 4,
+  scale: 1.5,
+  x: 6.5, y: 10.5,
+  facing: "down",
+  state: "sleeping",     // sleeping | waking | walking | idle | working
+  stateTimer: 0,
+  walkTarget: null,      // {x, y} tile coords
+  walkSpeed: 2.2,
+  bedPos: { x: 2, y: 11 },
+  roamPoints: [
+    { x: 6, y: 6 }, { x: 12, y: 10 }, { x: 16, y: 7 },
+    { x: 8, y: 12 }, { x: 3, y: 6 }, { x: 14, y: 11 }
+  ],
+  animFrame: 0,
+  animTimer: 0,
+  bobPhase: Math.random() * Math.PI * 2,
+  zzzPhase: 0,
+  idleDuration: 0,
+  lastRoamIdx: -1
+};
+
+// A real Gen 4 DS sprite, cut out of a TSR rip by tools/tsr_extract.py — here to sit
+// next to ours as a reference: 64px cells, 14 colours, 2 walk frames doubled to 4.
+var ARCEUS_NPC = {
+  name: "Arceus",
+  color: "#e8e8f8",
+  sheet: "sprites/arceus-sheet.png",
+  frameW: 64, frameH: 64, frames: 4,
+  scale: 0.85,
+  x: 14.5, y: 6.5,
+  facing: "down",
+  state: "idle",
+  stateTimer: 0,
+  walkTarget: null,
+  walkSpeed: 1.6,
+  bedPos: { x: 16, y: 6 },
+  roamPoints: [
+    { x: 14, y: 6 }, { x: 10, y: 5 }, { x: 16, y: 9 },
+    { x: 12, y: 8 }, { x: 17, y: 5 }
+  ],
+  animFrame: 0,
+  animTimer: 0,
+  bobPhase: Math.random() * Math.PI * 2,
+  zzzPhase: 0,
+  idleDuration: 0,
+  lastRoamIdx: -1
+};
+
+// Built from LimeZu generator layers by tools/compose_character.py — 32x64 cells,
+// six walk frames per direction. The first agent to get a real body.
+var CELESTE_NPC = {
+  name: "Celeste",
+  color: "#b39ddb",
+  sheet: "sprites/celeste-sheet.png",
+  frameW: 32, frameH: 64, frames: 6,
+  scale: 1.0,
+  x: 4.5, y: 9.5,
+  facing: "down",
+  state: "sleeping",
+  stateTimer: 0,
+  walkTarget: null,
+  walkSpeed: 2.0,
+  bedPos: { x: 3, y: 9 },
+  roamPoints: [
+    { x: 5, y: 7 }, { x: 8, y: 9 }, { x: 4, y: 12 },
+    { x: 9, y: 6 }, { x: 6, y: 11 }
+  ],
+  animFrame: 0,
+  animTimer: 0,
+  bobPhase: Math.random() * Math.PI * 2,
+  zzzPhase: 0,
+  idleDuration: 0,
+  lastRoamIdx: -1
+};
+
+// Celeste now has a body at her desk (see AGENTS) — the roaming copy would be a twin.
+// Wanderer and Arceus were art tests; the room belongs to the agents now.
+// Their definitions stay above in case a roaming visitor is wanted later.
+var NPCS = [];
+
+// sprite sheets: rows are directions, cols are walk frames; cell size and frame
+// count are per-NPC (frameW / frameH / frames).
+// row 0 = down, row 1 = left, row 2 = right, row 3 = up
+var SHEET_CACHE = {};
+function sheetFor(npc) {
+  var img = SHEET_CACHE[npc.sheet];
+  if (!img) {
+    img = new Image();
+    img.src = npc.sheet + "?v=" + Date.now();   // sheets get edited in place; never serve a stale one
+    SHEET_CACHE[npc.sheet] = img;
+  }
+  return img;
+}
+var SPRITE_DIR_ROW = { down: 0, left: 1, right: 2, up: 3 };
+var SHOW_FACING = true;   // debug: print the direction the code thinks it is facing
+
+function drawNpcSprite(npc, now) {
+  var px = npc.x * TILE;
+  var py = npc.y * TILE;
+  var f = npc.facing;
+  var frame = npc.animFrame;
+  var bob = (npc.state === "walking")
+    ? ((frame % (npc.frames / 2) === 1) ? -2 : 0)
+    : Math.sin(now / 600 + npc.bobPhase) * 1.5;
+  var FW = npc.frameW, FH = npc.frameH;
+  var SW = FW * npc.scale, SH = FH * npc.scale;   // feet stay anchored on the tile
+  var headY = py + bob + 16 - SH;
+
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.beginPath();
+  ctx.ellipse(px, py + 13, 9 * npc.scale * (FW / 32), 3.5 * npc.scale * (FW / 32), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // sprite from sheet
+  var sheet = sheetFor(npc);
+  if (sheet.complete && sheet.naturalWidth > 0) {
+    var row = SPRITE_DIR_ROW[f] || 0;
+    var col = frame;
+    ctx.drawImage(sheet, col * FW, row * FH, FW, FH, px - SW / 2, headY, SW, SH);
+  } else {
+    // fallback circle while loading
+    ctx.fillStyle = npc.color;
+    ctx.beginPath();
+    ctx.arc(px, py + bob, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // zzz particles when sleeping
+  if (npc.state === "sleeping") {
+    npc.zzzPhase += 0.015;
+    var zAlpha = 0.4 + 0.3 * Math.sin(npc.zzzPhase * 2);
+    ctx.font = "8px monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(200,200,255," + zAlpha.toFixed(2) + ")";
+    var zy = headY - 2 - Math.sin(npc.zzzPhase) * 6;
+    ctx.fillText("z", px + 8, zy);
+    ctx.font = "10px monospace";
+    ctx.fillStyle = "rgba(200,200,255," + (zAlpha * 0.7).toFixed(2) + ")";
+    ctx.fillText("z", px + 14, zy - 6);
+    ctx.font = "12px monospace";
+    ctx.fillStyle = "rgba(200,200,255," + (zAlpha * 0.5).toFixed(2) + ")";
+    ctx.fillText("Z", px + 20, zy - 12);
+  }
+
+  // name tag — sits above the sprite's head, not on it
+  ctx.font = "9px monospace";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  var tag = SHOW_FACING ? npc.name + " " + f : npc.name;
+  var tw = ctx.measureText(tag).width + 6;
+  ctx.fillRect(px - tw / 2, headY - 14, tw, 11);
+  ctx.fillStyle = npc.color;
+  ctx.fillText(tag, px, headY - 6);
+}
+
+function updateTestNpc(dt, npc) {
+  npc.stateTimer += dt;
+
+  switch (npc.state) {
+    case "sleeping":
+      npc.x += (npc.bedPos.x + 0.5 - npc.x) * Math.min(1, dt * 3);
+      npc.y += (npc.bedPos.y + 0.5 - npc.y) * Math.min(1, dt * 3);
+      if (npc.stateTimer > 5 + Math.random() * 4) {
+        npc.state = "waking";
+        npc.stateTimer = 0;
+      }
+      break;
+
+    case "waking":
+      if (npc.stateTimer > 0.8) {
+        var idx;
+        do { idx = Math.floor(Math.random() * npc.roamPoints.length); }
+        while (idx === npc.lastRoamIdx && npc.roamPoints.length > 1);
+        npc.lastRoamIdx = idx;
+        npc.walkTarget = npc.roamPoints[idx];
+        npc.state = "walking";
+        npc.stateTimer = 0;
+      }
+      break;
+
+    case "walking":
+      if (!npc.walkTarget) { npc.state = "idle"; npc.stateTimer = 0; break; }
+      var tx = npc.walkTarget.x + 0.5;
+      var ty = npc.walkTarget.y + 0.5;
+      var ddx = tx - npc.x;
+      var ddy = ty - npc.y;
+      var dist = Math.hypot(ddx, ddy);
+
+      if (dist < 0.15) {
+        npc.x = tx; npc.y = ty;
+        npc.state = "idle";
+        npc.stateTimer = 0;
+        npc.idleDuration = 2 + Math.random() * 4;
+        break;
+      }
+
+      var step = npc.walkSpeed * dt;
+      if (step > dist) step = dist;
+      npc.x += (ddx / dist) * step;
+      npc.y += (ddy / dist) * step;
+
+      if (Math.abs(ddx) > Math.abs(ddy)) {
+        npc.facing = ddx > 0 ? "right" : "left";
+      } else {
+        npc.facing = ddy > 0 ? "down" : "up";
+      }
+
+      npc.animTimer += dt;
+      if (npc.animTimer > 0.2) {
+        npc.animTimer = 0;
+        npc.animFrame = (npc.animFrame + 1) % npc.frames;
+      }
+      break;
+
+    case "idle":
+      npc.animFrame = 0;
+      if (npc.stateTimer > npc.idleDuration) {
+        if (Math.random() < 0.4) {
+          npc.walkTarget = { x: npc.bedPos.x, y: npc.bedPos.y };
+          npc.state = "walking";
+          npc.stateTimer = 0;
+          npc._goingToBed = true;
+        } else {
+          var idx2;
+          do { idx2 = Math.floor(Math.random() * npc.roamPoints.length); }
+          while (idx2 === npc.lastRoamIdx && npc.roamPoints.length > 1);
+          npc.lastRoamIdx = idx2;
+          npc.walkTarget = npc.roamPoints[idx2];
+          npc.state = "walking";
+          npc.stateTimer = 0;
+          npc._goingToBed = false;
+        }
+      }
+      break;
+  }
+
+  if (npc.state === "idle" && npc._goingToBed) {
+    npc.state = "sleeping";
+    npc.stateTimer = 0;
+    npc.facing = "down";
+    npc._goingToBed = false;
+  }
+}
+
+function agentByName(name) {
+  for (var i = 0; i < AGENTS.length; i++) {
+    if (AGENTS[i].name === name) return AGENTS[i];
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------
+// Coffee break — an agent who has been quiet for a while gets up, walks to the
+// pantry, stands there a moment, and walks back to their desk. Cosmetic only:
+// the feed keeps driving their PC either way. One agent at the pantry at a
+// time, so they queue instead of standing inside each other.
+//
+// The pantry is a walled room now, so the walk needs waypoints: stepAgentTo is
+// a straight line and has no idea a wall exists. Three points is enough —
+// hall, doorway, table — and it costs nothing next to a pathfinder.
+// ---------------------------------------------------------------
+var PANTRY_PATH = [
+  { x: 11.5, y: 13.5 },   // centre of the only gap through the desk row (see HALL)
+  { x: 9.2, y: 17.5 },    // just outside the pantry door
+  { x: 4.0, y: 19.0 }     // standing at the café table
+];
+// Ox never leaves his room; his "break" is a shuffle to the shelves and back.
+var OX_HOME = { x: 25.5, y: 19.0 };
+var OX_PATH = [{ x: 26.5, y: 16.6 }];
+
+var COFFEE_GAP_MIN = 30;   // seconds of desk time before one is eligible
+var COFFEE_GAP_MAX = 80;
+var COFFEE_LINGER = 7;     // seconds spent standing at the pantry
+var AGENT_WALK_SPEED = 2.4;
+var pantryTaken = null;
+
+// ---------------------------------------------------------------
+// The lounge — where idleness becomes visible
+//
+// An agent with nothing to do drifts to the couch, and a tool call sends them
+// back to their desk. That walk IS the notification: work used to just appear
+// on a monitor, and nobody saw it arrive. It also means the room can be read
+// with no labels at all — busy house, empty lounge; quiet night, everyone
+// sprawled.
+//
+// The sofas face down onto the rug and the bench and ottoman face up, so two
+// idle agents across from each other end up looking at each other. That is the
+// layout doing it, not code.
+// ---------------------------------------------------------------
+// Every seat carries `via`: the waypoints walked after the hall point and before
+// the cushion. stepAgentTo is a straight line that slides along whatever it
+// hits, and a straight line from the hall to the bench runs into the back of
+// the 3-seat sofa — the agent slid along it, got pulled back toward the seat,
+// slid again, forever. Never wedged, so the 4-second bail never fired: Celeste
+// stood above the sofa all night. Same fix as the pantry: a few points.
+//
+// `lift` raises the name plate so neighbours on one piece don't collide.
+var LOUNGE_IN  = { x: 15.5, y: 15.6 };   // the gap between the two right-hand sofas
+var LOUNGE_LOW = { x: 15.5, y: 19.6 };   // bottom of that lane, on the rug
+var LOUNGE_SEATS = [
+  { x: 12.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 12.5, y: 16.3 }] },   // 3-seat sofa
+  { x: 13.5, y: 17.5, facing: "down", lift: 13, via: [{ x: 13.5, y: 16.3 }] },
+  { x: 14.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 14.5, y: 16.3 }] },
+  { x: 17.5, y: 18.5, facing: "down", lift: 0,  via: [LOUNGE_IN, { x: 17.5, y: 17.4 }] },   // right 2-seat
+  { x: 18.5, y: 18.5, facing: "down", lift: 13, via: [LOUNGE_IN, { x: 18.5, y: 17.4 }] },
+  { x: 13.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // bench
+  { x: 16.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // ottoman
+  { x: 9.5,  y: 18.5, facing: "down", lift: 0,  via: [{ x: 10.5, y: 16.4 }, { x: 9.5,  y: 17.4 }] },   // left 2-seat
+  { x: 10.5, y: 18.5, facing: "down", lift: 13, via: [{ x: 10.5, y: 16.4 }, { x: 10.5, y: 17.4 }] },
+  { x: 18.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // stools
+  { x: 19.5, y: 20.4, facing: "up",   lift: 13, via: [LOUNGE_IN, LOUNGE_LOW] }
+];
+var loungeTaken = {};        // seat index -> agent name
+// x=11.5, not 10, and the reason is measurable: row 11 has exactly one gap in
+// it (tiles 10-13) and a body is 0.7 tiles wide, so anything centred below
+// x=10.35 has a corner inside the desk at tile 9. A waypoint no body can stand
+// on is a waypoint nobody can reach — they inch sideways at it forever.
+var HALL = { x: 11.5, y: 13.5 };
+// The top-row pods sit behind the row-11 desks. From the hall, a straight line
+// to Monica's chair runs into Juxtapo's desk and slides the wrong way — pinned
+// at (4.5, 12.4), pulled left, forever. Up the gap first, then across.
+var UPPER_HALL = { x: 11.5, y: 9.5 };
+var EXIT_DOOR = { x: 14.5, y: 21.4 };     // bottom centre — the way out of the building
+var OX_TO_HALL = [{ x: 22.5, y: 17.5 }, { x: 20.5, y: 17.5 }];
+var EXIT_PATH = [HALL, LOUNGE_IN, LOUNGE_LOW, EXIT_DOOR];   // hall to the front door, around the sofas
+// The couch is a break, not a home. Abang's call (2026-09-06 3 AM): someone who
+// has been working stays at the desk a good while after the last call, and an
+// agent with nothing to do still ends up back in front of their own PC — the
+// doomscrolling posture — rather than living on the sofa.
+var IDLE_TO_LOUNGE = 120;    // seconds without a tool call before the first drift
+var LOUNGE_STAY_MIN = 45;    // seconds on the couch before wandering back
+var LOUNGE_STAY_MAX = 100;
+var LOUNGE_GAP_MIN = 150;    // seconds at the desk before the next trip
+var LOUNGE_GAP_MAX = 300;
+var LOUNGE_RETRY = 2;        // seconds between attempts when every seat is taken
+
+// the full walk to a seat: out of wherever you are, then the seat's own approach
+function loungeRoute(seatIdx, lead) {
+  var seat = LOUNGE_SEATS[seatIdx];
+  return lead.concat(seat.via, [{ x: seat.x, y: seat.y }]);
+}
+
+function claimLoungeSeat(a) {
+  var free = [];
+  for (var i = 0; i < LOUNGE_SEATS.length; i++) {
+    if (!loungeTaken[i]) free.push(i);
+  }
+  if (!free.length) return -1;
+  var pick = free[Math.floor(Math.random() * free.length)];
+  loungeTaken[pick] = a.name;
+  a.labelLift = LOUNGE_SEATS[pick].lift;
+  return pick;
+}
+
+function releaseSpots(a) {
+  if (pantryTaken === a.name) pantryTaken = null;
+  Object.keys(loungeTaken).forEach(function (k) {
+    if (loungeTaken[k] === a.name) delete loungeTaken[k];
+  });
+  a.loungeSeat = -1;
+  a.labelLift = 0;
+}
+
+function idleSeconds(a, now) {
+  return (now - a.lastActivity) / 1000;
+}
+
+// move an agent toward a point; returns true once it has arrived
+//
+// Agents used to walk straight through desks — the line had no idea an object
+// existed. They now use the same hitbox the player does, and when the direct
+// step is blocked they try each axis alone, which slides them along a desk
+// edge instead of into it. No pathfinder: this room has no concave traps, and
+// the one real obstacle course (the pantry) already has waypoints.
+function tryMove(a, x, y) {
+  if (!playerCanStandAt(x, y)) return false;
+  if (Math.abs(x - a.x) < 1e-6 && Math.abs(y - a.y) < 1e-6) return false;
+  a.x = x; a.y = y;
+  return true;
+}
+
+function stepAgentTo(a, tx, ty, dt) {
+  var dx = tx - a.x;
+  var dy = ty - a.y;
+  var dist = Math.hypot(dx, dy);
+  if (dist < 0.08) { a.x = tx; a.y = ty; a.stuckFor = 0; a.slideDir = 0; return true; }
+
+  var step = Math.min(AGENT_WALK_SPEED * dt, dist);
+  var nx = a.x + (dx / dist) * step;
+  var ny = a.y + (dy / dist) * step;
+
+  // The last stretch is exempt: a chair, a sofa cushion and a pantry stool are
+  // all solid, and an agent that cannot enter its own seat never sits down.
+  // So is the first: a body already on the cushion can't take any step that
+  // clears it, and would sit there wedged until the bail fired — forever.
+  var arriving = dist < 0.9 || !playerCanStandAt(a.x, a.y);
+  var moved = false;
+
+  if (arriving) {
+    a.x = nx; a.y = ny; moved = true;
+  } else if (tryMove(a, nx, ny)) {
+    moved = true;
+  } else if (tryMove(a, nx, a.y) || tryMove(a, a.x, ny)) {
+    moved = true;            // slide along the face of whatever is in the way
+  } else {
+    // Head-on into a desk with nothing to slide against — walking straight
+    // down at a desk gives a zero sideways delta, so there is no "along" to go.
+    // Step sideways instead, and keep stepping the same way until it clears;
+    // flipping every frame just vibrates in place.
+    if (!a.slideDir) a.slideDir = Math.random() < 0.5 ? -1 : 1;
+    var sideways = Math.abs(dy) >= Math.abs(dx);
+    if (tryMove(a,
+                a.x + (sideways ? a.slideDir * step : 0),
+                a.y + (sideways ? 0 : a.slideDir * step))) {
+      moved = true;
+    } else {
+      a.slideDir = -a.slideDir;    // that way is blocked too; try the other
+    }
+  }
+
+  if (moved) {
+    a.stuckFor = 0;
+  } else {
+    // Wedged. Never leave a body frozen mid-room: give up on the trip.
+    a.stuckFor = (a.stuckFor || 0) + dt;
+    if (a.stuckFor > 4) {
+      a.stuckFor = 0;
+      a.slideDir = 0;
+      releaseSpots(a);
+      if (a.fieldAgent) {
+        a.wanderState = "idle";
+        a.breakTimer = 0;
+      } else {
+        a.breakState = "returning";
+        a.pathIdx = -1;
+      }
+    }
+  }
+
+  a.facing = (Math.abs(dx) > Math.abs(dy))
+    ? (dx > 0 ? "right" : "left")
+    : (dy > 0 ? "down" : "up");
+
+  a.animTimer += dt;
+  if (a.animTimer > 0.14) {
+    a.animTimer = 0;
+    a.animFrame = (a.animFrame + 1) % a.frames;
+  }
+  return false;
+}
+
+// walk the waypoint list; `dir` +1 outbound, -1 back to the seat.
+// returns true when the last point of that direction is reached.
+function stepAlongPath(a, path, dir, dt) {
+  var pt = path[a.pathIdx];
+  if (!stepAgentTo(a, pt.x, pt.y, dt)) return false;
+  a.pathIdx += dir;
+  return a.pathIdx < 0 || a.pathIdx >= path.length;
+}
+
+function updateCoffeeBreaks(dt) {
+  var now = performance.now();
+  AGENTS.forEach(function (a) {
+    if (a.fieldAgent) { updateWanderer(a, dt, now); return; }
+    if (a.away || !a.seat) return;
+    var path = a.butler ? OX_PATH : a.coffeePath;
+    a.breakTimer += dt;
+
+    switch (a.breakState) {
+      case "seated":
+        if (dialogueAgent !== a) a.facing = a.butler ? "down" : "up";
+        a.animFrame = 0;
+        if (a.activity >= 0.05) break;   // working; nobody wanders mid-call
+
+        // Idle long enough to give up on the desk for a while.
+        if (idleSeconds(a, now) > IDLE_TO_LOUNGE && now >= (a.nextLoungeTry || 0)) {
+          var s = claimLoungeSeat(a);
+          if (s >= 0) {
+            a.loungeSeat = s;
+            a.loungePath = loungeRoute(s, a.lead);
+            a.loungeStay = LOUNGE_STAY_MIN + Math.random() * (LOUNGE_STAY_MAX - LOUNGE_STAY_MIN);
+            a.breakState = "toLounge";
+            a.breakTimer = 0;
+            a.pathIdx = 0;
+            break;
+          }
+          a.nextLoungeTry = now + LOUNGE_RETRY * 1000;   // full house; don't ask every frame
+        }
+        // otherwise the old coffee run, which needs the pantry to be free
+        if (a.breakTimer > a.nextBreak && (a.butler || !pantryTaken)) {
+          if (!a.butler) pantryTaken = a.name;
+          a.breakState = "toPantry";
+          a.breakTimer = 0;
+          a.pathIdx = 0;
+        }
+        break;
+
+      case "toLounge":
+        // Ox has a door to get out of first; everyone else clears the
+        // partitions at the hall point. Then the seat's own approach.
+        if (stepAlongPath(a, a.loungePath, 1, dt)) {
+          a.breakState = "lounging";
+          a.breakTimer = 0;
+        }
+        break;
+
+      case "lounging":
+        var seat = LOUNGE_SEATS[a.loungeSeat];
+        if (seat && dialogueAgent !== a) a.facing = seat.facing;
+        a.animFrame = 0;
+        // The walk back is the notification — this is the whole point.
+        // Out the way it came in: a straight line from the bench to a desk
+        // hits the same sofa the approach was routed around.
+        // A break also just ends: back to the desk to doomscroll, and the
+        // next trip is a good while off.
+        if (a.activity >= 0.05 || a.breakTimer > a.loungeStay) {
+          releaseSpots(a);
+          a.returnPath = a.loungePath;
+          a.breakState = "returning";
+          a.breakTimer = 0;
+          a.pathIdx = a.loungePath.length - 1;
+          a.nextLoungeTry = now + (LOUNGE_GAP_MIN + Math.random() * (LOUNGE_GAP_MAX - LOUNGE_GAP_MIN)) * 1000;
+        }
+        break;
+
+      case "toPantry":
+        if (stepAlongPath(a, path, 1, dt)) {
+          a.breakState = "atPantry";
+          a.breakTimer = 0;
+          a.pathIdx = path.length - 1;
+          a.facing = "up";
+          a.animFrame = 0;
+        }
+        break;
+
+      case "atPantry":
+        if (a.breakTimer > COFFEE_LINGER) {
+          a.returnPath = path;
+          a.breakState = "returning";
+          a.breakTimer = 0;
+          a.pathIdx = path.length - 1;
+        }
+        break;
+
+      case "returning":
+        // back down the same waypoints, then the last step onto the chair
+        if (a.pathIdx >= 0) {
+          stepAlongPath(a, a.returnPath, -1, dt);
+          break;
+        }
+        if (stepAgentTo(a, a.seat.x, a.seat.y, dt)) {
+          a.breakState = "seated";
+          a.breakTimer = 0;
+          a.nextBreak = COFFEE_GAP_MIN + Math.random() * (COFFEE_GAP_MAX - COFFEE_GAP_MIN);
+          releaseSpots(a);
+        }
+        break;
+    }
+  });
+}
+
+// ---------------------------------------------------------------
+// The field agent runs backwards from everyone else.
+//
+// The room walks TO a desk when work arrives. She walks OUT THE DOOR — a
+// summons means she leaves the building, which is what a field agent is. In
+// between she has no desk to be at, so she loafs: couch, pantry, and reading
+// over somebody's shoulder. Her chair stays empty either way, which was always
+// the point; she is just visibly doing nothing next to it now.
+// ---------------------------------------------------------------
+function updateWanderer(a, dt, now) {
+  a.breakTimer += dt;
+
+  switch (a.wanderState) {
+    case "away":
+      return;    // out on a job — no body, see updateFieldAgents()
+
+    case "leaving":
+      if (stepAlongPath(a, a.wanderPath, 1, dt)) {
+        a.wanderPath = null;
+        a.away = true;
+        a.wanderState = "away";
+      }
+      return;
+
+    case "arriving":
+      if (stepAlongPath(a, EXIT_PATH, -1, dt)) {
+        a.wanderState = "idle";
+        a.breakTimer = 999;   // pick somewhere to be immediately
+      }
+      return;
+
+    case "peeking":
+      // stand behind a desk and watch someone work
+      if (a.breakTimer > 6) wanderHome(a);
+      a.animFrame = 0;
+      return;
+
+    case "walking":
+      if (stepAlongPath(a, a.wanderPath, 1, dt)) {
+        a.wanderState = a.wanderTo.peek ? "peeking" : "sitting";
+        a.breakTimer = 0;
+        if (a.wanderTo.facing) a.facing = a.wanderTo.facing;
+      }
+      return;
+
+    case "sitting":
+      a.animFrame = 0;
+      if (a.breakTimer > 12) wanderHome(a);
+      return;
+
+    case "toHall":
+      // Back out the way she came in. Every drift starts and ends at the hall
+      // point, so no path ever has to know where the last one left her.
+      if (stepAlongPath(a, a.wanderPath, -1, dt)) {
+        a.wanderPath = null;
+        a.wanderState = "idle";
+        a.breakTimer = 0;
+      }
+      return;
+
+    default:  // "idle" — decide where to drift next; she is standing at HALL
+      if (a.breakTimer < 3) return;
+      a.breakTimer = 0;
+      a.pathIdx = 0;
+      var roll = Math.random();
+      if (roll < 0.4) {
+        var s = claimLoungeSeat(a);
+        if (s >= 0) {
+          a.loungeSeat = s;
+          a.wanderTo = LOUNGE_SEATS[s];
+          a.wanderPath = loungeRoute(s, [HALL]);
+          a.wanderState = "walking";
+          return;
+        }
+      }
+      if (roll < 0.7 && !pantryTaken) {
+        pantryTaken = a.name;
+        a.wanderTo = { x: 4.0, y: 19.0, facing: "up" };
+        a.wanderPath = PANTRY_PATH;
+        a.wanderState = "walking";
+        return;
+      }
+      var victim = randomPresentAgent();
+      if (victim && victim.seat) {
+        a.wanderTo = { x: victim.seat.x + 0.9, y: victim.seat.y, peek: true };
+        // the victim's own way out of their pod, walked inward
+        a.wanderPath = victim.lead.slice().reverse().concat([a.wanderTo]);
+        a.wanderState = "walking";
+      }
+      return;
+  }
+}
+
+function wanderHome(a) {
+  releaseSpots(a);
+  a.wanderState = "toHall";
+  a.pathIdx = a.wanderPath.length - 1;
+}
+
+// Summoned: whatever she was doing, retrace it to the hall and take the lounge
+// lane to the door. A straight line to the door from the pantry goes through
+// its wall; from the sofa, through the sofa.
+function wanderOut(a) {
+  releaseSpots(a);
+  var back = [];
+  if (a.wanderPath && a.wanderState !== "idle") {
+    var last = Math.min(a.pathIdx, a.wanderPath.length - 1);
+    back = a.wanderPath.slice(0, last + 1).reverse();
+  }
+  a.wanderPath = back.concat(EXIT_PATH);
+  a.pathIdx = 0;
+  a.wanderState = "leaving";
+}
+
+AGENTS.forEach(function (a) {
+  a.facing = "up";              // agents face their monitor while seated
+  a.animFrame = 0;
+  a.animTimer = 0;
+  a.pathIdx = 0;
+  a.bobPhase = Math.random() * Math.PI * 2;
+  a.lastActivity = performance.now();
+  a.currentTool = statusToTool(a.status);
+  a.activity = 0;  // 0..1, spikes on a tool-call event, decays fast — drives cable glow
+  a.load = 0;      // 0..1, smoothed activity — drives the PC activity bar
+  a.breakState = "seated";
+  a.breakTimer = 0;
+  a.loungeSeat = -1;
+  a.stuckFor = 0;
+  a.nextBreak = COFFEE_GAP_MIN + Math.random() * (COFFEE_GAP_MAX - COFFEE_GAP_MIN);
+});
+
+// Agents bind to a PC object by matching its `owner`. The chair is derived
+// from the PC at (pc.x, pc.y + 1); the agent sits there facing up. The butler
+// has no PC and no cable — his room is his post.
+function bindAgents() {
+  AGENTS.forEach(function (a, i) {
+    var pc = null;
+    for (var k = 0; k < OBJECTS.length; k++) {
+      if (OBJECTS[k].type === "pc" && OBJECTS[k].owner === a.name) { pc = OBJECTS[k]; break; }
+    }
+
+    if (pc) {
+      a.pc = pc;
+      a.chair = { x: pc.x, y: pc.y + 1 };
+      // y+1.6, not y+1.85: a body is 0.7 tiles tall, so a seat at 12.85 has its
+      // bottom corners in row 13 — the pantry partition, for the left-hand pod.
+      // Those two agents were sitting inside a wall and could not step out of
+      // it in any direction. Nothing showed it until walking got collision.
+      a.seat = { x: pc.x + 0.5, y: pc.y + 1.6 };   // where a break returns to
+      a.lead = pc.y < 8 ? [UPPER_HALL, HALL] : [HALL];   // this desk's way to the hall
+      a.coffeePath = a.lead.concat(PANTRY_PATH.slice(1));   // PANTRY_PATH starts at HALL
+      a.x = a.seat.x;
+      a.y = a.seat.y;          // seated low enough that the screen clears their head
+      a.pcX = (pc.x + 0.5) * TILE;
+      a.pcY = (pc.y + 0.5) * TILE;
+      if (a.fieldAgent) {
+        // She has a desk and never uses it. Now that she is visibly in the
+        // room, the desk still has to say so: no load bar, no lit monitor.
+        // Hers is still the only chair in here that means something by being
+        // empty — she is just loafing next to it instead of being absent.
+        a.pcX = null;
+        a.pcY = null;
+        a.x = HALL.x;
+        a.y = HALL.y;
+      }
+    } else if (a.butler) {
+      a.pc = null;
+      a.chair = null;
+      a.seat = { x: OX_HOME.x, y: OX_HOME.y };
+      a.lead = OX_TO_HALL;
+      a.x = a.seat.x;
+      a.y = a.seat.y;
+      a.pcX = null;
+      a.pcY = null;
+    } else {
+      a.pc = null;
+      a.chair = null;
+      a.seat = null;
+      a.x = 3.5 + i * 2;
+      a.y = 7.5;
+      a.pcX = null;
+      a.pcY = null;
+    }
+  });
+}
+bindAgents();
+
+// ---------------------------------------------------------------
+
+// The bubble over a head is ONE line, MCP-shaped — `read`, `edit`, `build` —
+// because two lines of English above eight heads is a wall of text, and the
+// pods are spaced for exactly two tiles of clear air.
+// A failed call replaces the word with an emoji for a few seconds.
+// ⚠️ Emoji in fillText depends on the VIEWER's colour-emoji font. If these
+// come out as tofu boxes, draw a 16px skull off the Halloween sheet instead.
+var BUBBLE_WORD = {
+  "idle": "—",
+  "away": "—",
+  "reading...": "read",
+  "editing...": "edit",
+  "thinking...": "think",
+  "building...": "build"
+};
+
+function bubbleText(a, now) {
+  if (a.failUntil && now < a.failUntil) return "💀";
+  // at the desk with nothing running for a while: the phone is out
+  if (a.breakState === "seated" && a.pc && a.activity < 0.05 && idleSeconds(a, now) > 20) return "scrolling";
+  return BUBBLE_WORD[a.status] || a.status;
+}
+
+function statusToTool(status) {
+  var map = {
+    "idle": "—",
+    "reading...": "Read(file.py)",
+    "editing...": "Edit(module.js)",
+    "thinking...": "reasoning...",
+    "building...": "Bash(npm run build)"
+  };
+  return map[status] || "—";
+}
+
+var STATUS_POOL = ["idle", "reading...", "editing...", "thinking...", "building..."];
+
+// An away agent (Umbra) has no body in the room, so nothing may pick her:
+// no status churn, no events, no cable, no dot on the minimap.
+function randomPresentAgent() {
+  // the field agent is excluded on purpose — she is in the room, but she has
+  // no desk and no desk work, so inventing a tool call for her is a lie
+  var here = AGENTS.filter(function (a) { return !a.away && !a.fieldAgent; });
+  if (!here.length) return null;
+  return here[Math.floor(Math.random() * here.length)];
+}
+
+// occasionally rotate an agent's status to feel alive
+setInterval(function () {
+  if (MODE !== "live" || liveActive()) return;   // real calls set status; leave it alone
+  var a = randomPresentAgent();
+  if (!a) return;
+  a.status = STATUS_POOL[Math.floor(Math.random() * STATUS_POOL.length)];
+  a.currentTool = statusToTool(a.status);
+  a.lastActivity = performance.now();
+}, 4000);
+
+// ---------------------------------------------------------------
+// Player — a visitor, with a body and a name
+//
+// The nine sprite colours are spoken for, so a visitor cannot be told apart by
+// colour. The hat does it, the same way Ox's flat cap says staff: everyone who
+// walks in through the door wears one, so a room with five strangers reads as
+// five strangers rather than as a bigger cast.
+// ---------------------------------------------------------------
+var VISITOR_CAST = [
+  { id: "m", sheet: "sprites/visitor-m-sheet.png" },
+  { id: "f", sheet: "sprites/visitor-f-sheet.png" }
+];
+var player = {
+  x: 14.5, y: 20.6,       // just inside the front door, facing the room
+  speed: 4.5,             // tiles per second
+  moving: false,
+  facing: "up",
+  animFrame: 0,
+  animTimer: 0,
+  name: null,
+  sheet: VISITOR_CAST[0].sheet,
+  frameW: 32, frameH: 64, frames: 6, scale: 1.0
+};
+
+// ---------------------------------------------------------------
+// Editor state
+// ---------------------------------------------------------------
+var editMode = false;
+var hoverCell = { x: -1, y: -1 };
+var dragging = null;        // object attached to the cursor
+var palette = { open: false, cellX: 0, cellY: 0, x: 0, y: 0 };
+var PALETTE_ITEM_H = 14;
+var PALETTE_W = 74;
+
+var keys = {};
+
+// Typing in the chat box must not drive the player. Every key would otherwise
+// land in `keys` AND hit the edit-mode / interact branches below, so "e" in a
+// sentence flips edit mode and Enter talks to whoever you are standing next to.
+// The door's name field is the same problem before the visitor is even inside.
+function chatTyping() {
+  var el = document.activeElement;
+  return el === document.getElementById("chatInput") ||
+         el === document.getElementById("doorName") ||
+         document.getElementById("door").classList.contains("on");
+}
+
+window.addEventListener("keydown", function (e) {
+  if (chatTyping()) return;
+  keys[e.key] = true;
+
+  if (e.key === "e" || e.key === "E") {
+    editMode = !editMode;
+    if (!editMode) { dragging = null; palette.open = false; }
+    else { dialogueOpen = false; dialogueAgent = null; }
+    e.preventDefault();
+    return;
+  }
+
+  if (editMode) {
+    if (e.key === "s" || e.key === "S") {
+      console.log(JSON.stringify(OBJECTS));
+      e.preventDefault();
+      return;
+    }
+    if (e.key === "Delete" || e.key === "Backspace") {
+      deleteHoveredObject();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  if (!editMode && (e.key === "Enter" || e.key === " ")) {
+    handleInteract();
+    e.preventDefault();
+  }
+  if (e.key.indexOf("Arrow") === 0) e.preventDefault();
+});
+window.addEventListener("keyup", function (e) { keys[e.key] = false; });
+
+function cellFromMouse(e) {
+  var r = canvas.getBoundingClientRect();
+  var mx = (e.clientX - r.left) * (canvas.width / r.width);
+  var my = (e.clientY - r.top) * (canvas.height / r.height);
+  return {
+    x: Math.floor(mx / TILE),
+    y: Math.floor(my / TILE),
+    px: mx,
+    py: my
+  };
+}
+
+canvas.addEventListener("mousemove", function (e) {
+  var c = cellFromMouse(e);
+  hoverCell.x = c.x;
+  hoverCell.y = c.y;
+});
+
+canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+canvas.addEventListener("mousedown", function (e) {
+  if (!editMode) return;
+  var c = cellFromMouse(e);
+
+  if (e.button === 2) {
+    palette.open = true;
+    palette.cellX = c.x;
+    palette.cellY = c.y;
+    palette.x = Math.min(c.px, CANVAS_W - PALETTE_W - 4);
+    palette.y = Math.min(c.py, CANVAS_H - OBJECT_TYPES.length * PALETTE_ITEM_H - 8);
+    e.preventDefault();
+    return;
+  }
+
+  if (e.button !== 0) return;
+
+  if (palette.open) {
+    var idx = Math.floor((c.py - palette.y - 4) / PALETTE_ITEM_H);
+    if (c.px >= palette.x && c.px <= palette.x + PALETTE_W && idx >= 0 && idx < OBJECT_TYPES.length) {
+      spawnObject(OBJECT_TYPES[idx], palette.cellX, palette.cellY);
+    }
+    palette.open = false;
+    return;
+  }
+
+  if (dragging) {
+    placeDragged(c.x, c.y);
+  } else {
+    var o = topObjectAt(c.x, c.y);
+    if (o) dragging = o;
+  }
+});
+
+function spawnObject(type, cx, cy) {
+  if (tileTypeAt(cx, cy) === T_WALL && type !== "poster") return;
+  OBJECTS.push(makeObject(type, cx, cy));
+  afterObjectsChanged();
+}
+
+function placeDragged(cx, cy) {
+  if (cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS) return;
+  if (tileTypeAt(cx, cy) === T_WALL && dragging.type !== "poster") return;
+  dragging.x = cx;
+  dragging.y = cy;
+  dragging = null;
+  afterObjectsChanged();
+}
+
+function deleteHoveredObject() {
+  var o = dragging || topObjectAt(hoverCell.x, hoverCell.y);
+  if (!o) return;
+  var i = OBJECTS.indexOf(o);
+  if (i >= 0) OBJECTS.splice(i, 1);
+  if (dragging === o) dragging = null;
+  afterObjectsChanged();
+}
+
+function afterObjectsChanged() {
+  bindAgents();
+}
+
+function tileFree(col, row) {
+  return !isSolidTile(Math.floor(col), Math.floor(row));
+}
+
+function playerCanStandAt(x, y) {
+  // check the 4 corners of a slightly inset hitbox
+  var pad = 0.15;
+  var corners = [
+    [x - 0.5 + pad, y - 0.5 + pad],
+    [x + 0.5 - pad, y - 0.5 + pad],
+    [x - 0.5 + pad, y + 0.5 - pad],
+    [x + 0.5 - pad, y + 0.5 - pad]
+  ];
+  for (var i = 0; i < corners.length; i++) {
+    if (!tileFree(corners[i][0], corners[i][1])) return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------
+// Dialogue state
+// ---------------------------------------------------------------
+var dialogueOpen = false;
+var dialogueAgent = null;
+
+function nearestAgentInRange() {
+  var best = null, bestDist = 1.6;
+  AGENTS.forEach(function (a) {
+    if (a.away) return;
+    var d = Math.hypot(a.x - player.x, a.y - player.y);
+    if (d < bestDist) { bestDist = d; best = a; }
+  });
+  return best;
+}
+
+function handleInteract() {
+  if (dialogueOpen) {
+    dialogueOpen = false;
+    dialogueAgent = null;
+    return;
+  }
+  var a = nearestAgentInRange();
+  if (a) {
+    dialogueOpen = true;
+    dialogueAgent = a;
+    a.line = sayLine(a);          // fixed for this conversation, not re-rolled per frame
+    // they turn to face whoever is talking to them
+    var dx = player.x - a.x, dy = player.y - a.y;
+    if (Math.abs(dx) > Math.abs(dy)) a.facing = dx > 0 ? "right" : "left";
+    else a.facing = dy > 0 ? "down" : "up";
+  }
+}
+
+// What an agent says when you walk up and press Enter. Every line is built from
+// a real fact — the tool that is running, how long they have been quiet, where
+// they are standing — so the room never puts words in anyone's mouth that the
+// feed could contradict. Umbra away has no body, so she cannot be asked.
+function sayLine(a) {
+  var you = player.name || "stranger";
+  var quiet = Math.floor((performance.now() - a.lastActivity) / 60000);
+  var tool = String(a.currentTool || "").toLowerCase();
+  var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+
+  if (a.butler) {
+    return pick([
+      "Mind the sign, " + you + ". Floor's wet.",
+      "Repo's pushed. Anything else, it waits till morning.",
+      "Nobody comes back here. You're the first today."
+    ]);
+  }
+  if (a.fieldAgent) {
+    return pick([
+      "Just passing through, " + you + ". Don't tell Fable I'm here.",
+      "That's my desk. I've never sat in it.",
+      "Off again the moment someone says my name."
+    ]);
+  }
+  if (a.breakState === "atPantry") return "Coffee, " + you + "? Machine's warm.";
+  if (a.breakState === "toLounge") return "Give me a minute. Been staring at a screen all night.";
+  if (a.breakState === "returning") return "Something just came in. Walk with me.";
+  if (a.breakState === "lounging") {
+    if (quiet < 1) return "Just sat down. Give it a minute, " + you + ".";
+    return pick([
+      "Quiet one tonight. Nothing's called me in " + quiet + " min.",
+      "Sit down, " + you + ". Nobody's needed me for " + quiet + " minutes.",
+      quiet + " minutes of nothing. I'll take it."
+    ]);
+  }
+  if (a.activity >= 0.05 && tool) {
+    return pick([
+      "Mid-" + tool + ", " + you + ". Hang on.",
+      "Can't talk — " + tool + " running.",
+      "One sec. " + tool + "."
+    ]);
+  }
+  return pick([
+    "Waiting on the next call, " + you + ".",
+    "Desk's quiet. Give it a moment.",
+    "Hey, " + you + "."
+  ]);
+}
+
+// ---------------------------------------------------------------
+// Event feed
+//
+// Two sources, one path into the room. Real tool calls arrive from
+// GET /events, which the PostToolUse hook fills through POST /event; the
+// simulated ticker below is only there so an empty room still breathes. The
+// moment a real event lands the simulator shuts up — see liveActive().
+// ---------------------------------------------------------------
+var EVENT_TEMPLATES = [
+  "Read config.yaml ✅",
+  "Edit server.py ✅",
+  "Bash(npm test) ✅",
+  "Grep 'TODO' ✅",
+  "Write handback.md ✅",
+  "Thinking...",
+  "Bash(git status) ✅",
+  "Read README.md ✅",
+  "Edit index.html ✅",
+  "Bash(curl localhost:8960) ✅",
+  "Bash(npm test) ❌",
+  "Edit locked.py ❌"
+];
+
+var eventLog = [];
+var MAX_EVENTS = 8;
+
+function pushEvent() {
+  if (MODE !== "live" || liveActive()) return;   // never invent a call on a public page
+  var a = randomPresentAgent();
+  if (!a) return;
+  var t = EVENT_TEMPLATES[Math.floor(Math.random() * EVENT_TEMPLATES.length)];
+  applyEvent(a, t, t.indexOf("❌") < 0);
+}
+
+// One tool call landing on one agent — the only way anything reaches the room.
+function applyEvent(a, label, ok) {
+  eventLog.push("[" + a.name + "] " + label);
+  if (eventLog.length > MAX_EVENTS) eventLog.shift();
+
+  var now = performance.now();
+  a.lastActivity = now;
+  a.activity = 1.0; // pulses the cable + PC bar, decays in update()
+  // a failed call takes over the bubble for a few seconds — see bubbleText()
+  a.failUntil = ok ? 0 : now + 3500;
+
+}
+
+// ---------------------------------------------------------------
+// Live feed — the real thing. A PostToolUse hook posts each tool call to
+// /event; we poll /events for whatever is newer than the last id we saw.
+//
+// The seat name in the payload is whatever the hook was configured with, so
+// match it loosely: someone writing "Celeste" or "celeste" means the same
+// chair, and a name nobody in the room answers to is dropped rather than
+// guessed at.
+// ---------------------------------------------------------------
+var LIVE_POLL_MS = 800;
+var LIVE_QUIET_MS = 90000;   // no real event this long → let the simulator back in
+var FIELD_STAY_MS = 120000;  // how long a summoned field agent stays in the room
+var liveMarker = null;       // null = not yet synced; we skip the backlog on load
+var lastLiveEvent = 0;
+
+// A field agent's chair is empty by default and fills only while she is
+// actually working. Nothing else in the room behaves this way, and that is the
+// point — Fable sits across from the one desk that means something by being
+// empty, right up until it isn't.
+function updateFieldAgents(now) {
+  AGENTS.forEach(function (a) {
+    if (!a.fieldAgent) return;
+    // Out on a job, and the job has gone quiet — she comes back in the door.
+    if (a.away && now > a.jobUntil) {
+      a.away = false;
+      a.activity = 0;
+      a.load = 0;
+      a.x = EXIT_DOOR.x;
+      a.y = EXIT_DOOR.y;
+      a.wanderState = "arriving";
+      a.pathIdx = EXIT_PATH.length - 1;
+      a.breakTimer = 0;
+    }
+  });
+}
+
+function liveActive() {
+  return lastLiveEvent > 0 && (performance.now() - lastLiveEvent) < LIVE_QUIET_MS;
+}
+
+// ---------------------------------------------------------------
+// Two worlds, decided by a probe, never by a guess.
+//
+//   LIVE     — a server is answering /events. Tool calls arrive as they happen.
+//   SNAPSHOT — no server (GitHub Pages). data/arena.json holds the room as it
+//              was when the publisher last ran, and the page says so on screen.
+//
+// In SNAPSHOT the simulated ticker stays OFF. A public page inventing tool
+// calls under real people's names is a lie with their name on it; a room that
+// breathes and does not pretend to be working is the honest version.
+// ---------------------------------------------------------------
+var MODE = "probing";        // "live" | "snapshot"
+var SNAPSHOT_TS = 0;
+
+function applySnapshot(d) {
+  SNAPSHOT_TS = d.ts || 0;
+  (d.seats || []).forEach(function (s) {
+    var a = seatNamed(s.name);
+    if (!a) return;
+    if (a.fieldAgent) return;   // she wanders; a frozen field agent says nothing
+    a.load = s.load || 0;
+    a.activity = 0;
+    if (s.status) a.status = s.status;
+  });
+  if (d.tokens) {
+    HOUSE.total = d.tokens.total || 0;
+    HOUSE.cost = d.tokens.cost || 0;
+    HOUSE.calls = d.tokens.calls || 0;
+    HOUSE.seen = !!(HOUSE.total || HOUSE.calls);
+  }
+  HOUSE.models = d.models || {};
+  (d.recent || []).forEach(function (line) { eventLog.push(line); });
+  while (eventLog.length > MAX_EVENTS) eventLog.shift();
+}
+
+function probeMode() {
+  // relative on purpose: on Pages the app lives in a subdirectory, and an
+  // absolute /events would probe the site root instead of the app.
+  return fetch("events").then(function (r) {
+    if (!r.ok) throw new Error("no live server");
+    return r.json();
+  }).then(function (d) {
+    if (!d || !d.events) throw new Error("not the arena server");
+    MODE = "live";
+    liveMarker = d.next;
+  }).catch(function () {
+    MODE = "snapshot";
+    return fetch("data/arena.json?t=" + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(applySnapshot)
+      .catch(function () { /* no snapshot either — the room just idles */ });
+  });
+}
+
+var TOOL_STATUS = {
+  read: "reading...", glob: "reading...", grep: "reading...",
+  edit: "editing...", write: "editing...", notebookedit: "editing...",
+  bash: "building...", task: "thinking...", webfetch: "reading..."
+};
+
+function seatNamed(name) {
+  var want = String(name || "").toLowerCase();
+  for (var i = 0; i < AGENTS.length; i++) {
+    if (AGENTS[i].name.toLowerCase() === want) return AGENTS[i];
+  }
+  return null;
+}
+
+function pollLive() {
+  var url = "/events" + (liveMarker === null ? "" : "?since=" + liveMarker);
+  fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+    // First poll only learns where "now" is — replaying an hour of backlog
+    // through the room would light every desk at once and mean nothing.
+    if (liveMarker === null) { liveMarker = d.next; return; }
+    liveMarker = d.next;
+
+    d.events.forEach(function (e) {
+      var a = seatNamed(e.seat);
+      if (!a) return;                       // a seat with no chair in this room
+      lastLiveEvent = performance.now();
+      // Umbra is away until she isn't: a real tool call under her name means
+      // she has been summoned, so she appears — and goes back to an empty
+      // chair once she has been quiet for a while. See updateFieldAgents().
+      if (a.fieldAgent) {
+        // Inverted from the whole room: work under her name means she has been
+        // sent somewhere, so she heads for the door instead of a chair.
+        a.jobUntil = lastLiveEvent + FIELD_STAY_MS;   // same clock as updateFieldAgents
+        if (!a.away && a.wanderState !== "leaving") wanderOut(a);
+      }
+      a.status = TOOL_STATUS[String(e.tool).toLowerCase()] || "thinking...";
+      a.currentTool = e.tool;
+      applyEvent(a, e.tool + (e.ok ? " ✅" : " ❌"), e.ok);
+    });
+  }).catch(function () { /* server down or restarting — the room just idles */ });
+}
+setInterval(function () { if (MODE === "live") pollLive(); }, LIVE_POLL_MS);
+
+// ---------------------------------------------------------------
+// Chat — visitors talking from inside the room
+//
+// Skeleton on purpose: everyone on the WireGuard net shares one log, and your
+// own line floats over your head so the room is where you said it, not just a
+// sidebar. Piping a line out to abang when nobody has the tab open is a later
+// enhancement; right now a message nobody is watching is simply missed.
+// ---------------------------------------------------------------
+var CHAT_POLL_MS = 1500;
+var CHAT_SAY_MS = 6000;      // how long your line hangs over your head
+var chatMarker = null;       // null = first poll, which takes the whole backlog
+var chatOpen = false;
+var chatName = null;
+
+var chatPanel = document.getElementById("chatPanel");
+var chatHandle = document.getElementById("chatHandle");
+var chatLog = document.getElementById("chatLog");
+var chatInput = document.getElementById("chatInput");
+
+function chatLine(html, cls) {
+  var atBottom = chatLog.scrollTop + chatLog.clientHeight >= chatLog.scrollHeight - 8;
+  var div = document.createElement("div");
+  if (cls) div.className = cls;
+  div.innerHTML = html;
+  chatLog.appendChild(div);
+  if (atBottom) chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+function setChatOpen(open) {
+  chatOpen = open;
+  chatPanel.classList.toggle("open", open);
+  document.getElementById("wrap").classList.toggle("chatopen", open);
+  if (open) {
+    chatHandle.classList.remove("unread");
+    // A key held down when focus leaves the canvas never fires its keyup, so
+    // the player would walk into a wall forever while you type.
+    keys = {};
+    chatInput.focus();
+    chatLog.scrollTop = chatLog.scrollHeight;
+  } else {
+    chatInput.blur();
+  }
+}
+
+chatHandle.addEventListener("click", function () { setChatOpen(!chatOpen); });
+document.getElementById("chatClose").addEventListener("click", function () { setChatOpen(false); });
+
+// The door asks once, then never again — a returning visitor walks straight in.
+// Name and body live in the same place the chat name already did, so signing the
+// book here also signs you into the chat.
+function askName() {
+  return player.name;
+}
+
+var doorEl = document.getElementById("door");
+var doorName = document.getElementById("doorName");
+var doorGo = document.getElementById("doorGo");
+var doorPick = 0;
+
+function loadVisitor() {
+  var n = null, body = null;
+  try {
+    n = localStorage.getItem("arena.name");
+    body = localStorage.getItem("arena.body");
+  } catch (err) { /* private window: ask again, every time */ }
+  var cast = VISITOR_CAST.filter(function (c) { return c.id === body; })[0];
+  if (n) {
+    player.name = n;
+    chatName = n;
+    if (cast) { player.sheet = cast.sheet; doorPick = VISITOR_CAST.indexOf(cast); }
+    return true;
+  }
+  return false;
+}
+
+function buildDoorCast() {
+  var host = document.getElementById("doorCast");
+  VISITOR_CAST.forEach(function (c, i) {
+    var b = document.createElement("button");
+    var cv = document.createElement("canvas");
+    cv.width = 32; cv.height = 64;
+    var img = new Image();
+    // the down-facing standing frame, painted as soon as the sheet lands
+    img.onload = function () { cv.getContext("2d").drawImage(img, 0, 0, 32, 64, 0, 0, 32, 64); };
+    img.src = c.sheet;
+    b.appendChild(cv);
+    b.className = (i === doorPick) ? "sel" : "";
+    b.addEventListener("click", function () {
+      doorPick = i;
+      Array.prototype.forEach.call(host.children, function (el, k) {
+        el.className = (k === i) ? "sel" : "";
+      });
+    });
+    host.appendChild(b);
+  });
+}
+
+function openDoor() {
+  buildDoorCast();
+  // a main menu, not a one-time form: it shows every load, remembering you
+  doorName.value = player.name || "";
+  doorGo.disabled = !doorName.value.trim();
+  doorEl.classList.add("on");
+  doorName.focus();
+  doorName.addEventListener("input", function () {
+    doorGo.disabled = !doorName.value.trim();
+  });
+  doorName.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && doorName.value.trim()) walkIn();
+    e.stopPropagation();        // typing must not drive the player behind the card
+  });
+  doorGo.addEventListener("click", walkIn);
+}
+
+function walkIn() {
+  var n = doorName.value.trim().slice(0, 16);
+  if (!n) return;
+  var cast = VISITOR_CAST[doorPick];
+  player.name = n;
+  chatName = n;
+  player.sheet = cast.sheet;
+  try {
+    localStorage.setItem("arena.name", n);
+    localStorage.setItem("arena.body", cast.id);
+  } catch (err) { /* private window — they just get asked again next time */ }
+  doorEl.classList.remove("on");
+  keys = {};                    // a key held while the card had focus never fires its keyup
+}
+
+document.getElementById("chatForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var text = chatInput.value.trim();
+  if (!text) return;
+  if (!chatName) chatName = askName();
+  if (!chatName) return;
+  chatInput.value = "";
+  fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: chatName, text: text })
+  }).catch(function () {
+    chatLine("— message did not reach the room —", "sys");
+  });
+  // Your own line goes up over your head immediately; the poll will echo it
+  // back into the log a moment later like everyone else's.
+  player.say = text;
+  player.sayUntil = performance.now() + CHAT_SAY_MS;
+});
+
+function pollChat() {
+  var url = "/chat" + (chatMarker === null ? "" : "?since=" + chatMarker);
+  fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+    chatMarker = d.next;
+    d.messages.forEach(function (m) {
+      var mine = chatName && m.name === chatName;
+      chatLine('<span class="who">' + esc(m.name) + '</span> ' + esc(m.text),
+               mine ? "me" : null);
+      if (!mine && !chatOpen) chatHandle.classList.add("unread");
+    });
+  }).catch(function () { /* server down — the room just idles */ });
+}
+setInterval(function () { if (MODE === "live") pollChat(); }, CHAT_POLL_MS);
+// The front panel shows on every load — a main menu — with the last name and
+// body already filled in, so a regular is one Enter away from the room.
+loadVisitor();
+openDoor();
+
+// The ledger sweep re-reads every transcript in the house and takes seconds,
+// so it is posted in minutes apart. Polling it faster would only re-fetch the
+// same number.
+function pollTokens() {
+  fetch("/tokens").then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.total) return;    // no reader running — the board stays blank
+    HOUSE.total = d.total;
+    HOUSE.cost = d.cost || 0;
+    HOUSE.seats = d.seats || {};
+    HOUSE.calls = Object.keys(HOUSE.seats).reduce(function (n, k) {
+      return n + (HOUSE.seats[k].calls || 0);
+    }, 0);
+    HOUSE.seen = true;
+  }).catch(function () { /* server down — the board keeps its last number */ });
+}
+setInterval(function () { if (MODE === "live") pollTokens(); }, 60000);
+
+// One probe decides the world, then the room starts asking for things.
+probeMode().then(function () {
+  if (MODE === "live") { pollChat(); pollTokens(); }
+  // No server means no chat: there is nowhere for a message to go.
+  chatHandle.style.display = MODE === "live" ? "" : "none";
+  var hint = document.getElementById("hint");
+  if (MODE === "live") {
+    hint.textContent = "Arrow keys to move \u00b7 Enter/Space near an agent to talk"
+                     + " \u00b7 E toggles edit mode \u00b7 \ud83d\udcac to chat";
+  } else {
+    var when = SNAPSHOT_TS
+      ? new Date(SNAPSHOT_TS * 1000).toLocaleString()
+      : "an unknown time";
+    hint.textContent = "Arrow keys to move \u00b7 SNAPSHOT \u2014 the house as it stood at "
+                     + when + ", not live";
+  }
+});
+
+// Intensity varies: bursts (3-4 events packed into ~1s), quiet lulls
+// (5-8s gap), and a normal in-between pace — so the room visibly breathes.
+function scheduleNextEvent() {
+  var roll = Math.random();
+
+  if (roll < 0.25) {
+    // burst — fire 3-4 events close together, then fall back to normal pace
+    var n = 3 + Math.floor(Math.random() * 2);
+    var fireBurst = function (i) {
+      pushEvent();
+      if (i < n - 1) setTimeout(function () { fireBurst(i + 1); }, 150 + Math.random() * 200);
+      else setTimeout(scheduleNextEvent, 1500 + Math.random() * 1500);
+    };
+    fireBurst(0);
+  } else if (roll < 0.45) {
+    // quiet lull
+    setTimeout(function () {
+      pushEvent();
+      scheduleNextEvent();
+    }, 5000 + Math.random() * 3000);
+  } else {
+    // normal pace
+    setTimeout(function () {
+      pushEvent();
+      scheduleNextEvent();
+    }, 1200 + Math.random() * 2300);
+  }
+}
+scheduleNextEvent();
+pushEvent();
+
+// ---------------------------------------------------------------
+// Update loop
+// ---------------------------------------------------------------
+var lastTime = performance.now();
+
+function update(dt) {
+  var dx = 0, dy = 0;
+  if (keys["ArrowUp"]) dy -= 1;
+  if (keys["ArrowDown"]) dy += 1;
+  if (keys["ArrowLeft"]) dx -= 1;
+  if (keys["ArrowRight"]) dx += 1;
+
+  player.moving = false;
+
+  // movement is disabled while the editor is open
+  if (!editMode && !dialogueOpen && (dx !== 0 || dy !== 0)) {
+    var len = Math.hypot(dx, dy);
+    dx /= len; dy /= len;
+
+    if (dx > 0) player.facing = "right";
+    else if (dx < 0) player.facing = "left";
+    else if (dy > 0) player.facing = "down";
+    else if (dy < 0) player.facing = "up";
+
+    var step = player.speed * dt;
+    var nx = player.x + dx * step;
+    var ny = player.y + dy * step;
+
+    // slide along axes independently so corners don't snag movement
+    if (playerCanStandAt(nx, player.y)) player.x = nx;
+    if (playerCanStandAt(player.x, ny)) player.y = ny;
+
+    player.moving = true;
+    player.animTimer += dt;
+    if (player.animTimer > 0.11) {         // six frames, so a faster cycle
+      player.animTimer = 0;
+      player.animFrame = (player.animFrame + 1) % player.frames;
+    }
+  } else {
+    player.animFrame = 0;
+    player.animTimer = 0;
+  }
+
+  // clamp inside room bounds
+  player.x = Math.max(0.6, Math.min(COLS - 0.6, player.x));
+  player.y = Math.max(0.6, Math.min(ROWS - 0.6, player.y));
+
+  // decay per-agent activity (cable glow) and smooth it into load (PC bar)
+  AGENTS.forEach(function (a) {
+    a.activity = Math.max(0, a.activity - dt / 1.1);
+    a.load += (a.activity - a.load) * Math.min(1, dt * 2.5);
+  });
+
+  var now = performance.now();
+  updateFieldAgents(now);
+
+  for (var ni = 0; ni < NPCS.length; ni++) updateTestNpc(dt, NPCS[ni]);
+  updateCoffeeBreaks(dt);
+}
+
+// ---------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function hexToRgba(hex, alpha) {
+  var r = parseInt(hex.slice(1, 3), 16);
+  var g = parseInt(hex.slice(3, 5), 16);
+  var b = parseInt(hex.slice(5, 7), 16);
+  return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+}
+
+function drawAgent(a, now) {
+  var px = a.x * TILE;
+  var bob = Math.sin(now / 500 + a.bobPhase) * 3;
+  var py = a.y * TILE + bob;
+  var SH = a.frameH * a.scale;
+  var headY = a.y * TILE + bob + 16 - SH;   // agents face their monitor: the "up" row
+
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(px, a.y * TILE + 12, 10, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  var sheet = sheetFor(a);
+  if (sheet.complete && sheet.naturalWidth > 0) {
+    var row = SPRITE_DIR_ROW[a.facing] || 0;
+    ctx.drawImage(sheet, a.animFrame * a.frameW, row * a.frameH, a.frameW, a.frameH,
+                  px - a.frameW * a.scale / 2, headY, a.frameW * a.scale, SH);
+  } else {
+    ctx.fillStyle = a.color;
+    ctx.beginPath();
+    ctx.arc(px, py, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // screen glow washing over them while they are actively firing tool calls
+  if (a.activity > 0.05) {
+    ctx.fillStyle = "rgba(79, 209, 255, " + (0.28 * a.activity).toFixed(2) + ")";
+    ctx.beginPath();
+    ctx.arc(px, headY + SH * 0.35, 11, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (a.breakState === "seated" && a.pc && idleSeconds(a, now) > 20) {
+    // nothing to do, still at the desk: a phone in the lap, lighting the chin
+    var ph = 0.10 + 0.04 * Math.sin(now / 900 + a.bobPhase);
+    ctx.fillStyle = "rgba(200, 220, 255, " + ph.toFixed(2) + ")";
+    ctx.beginPath();
+    ctx.arc(px, headY + SH * 0.55, 7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Name tag. On the couch the seats are one tile apart and names are wider
+  // than that, so neighbours' plates collide — alternate seats sit higher.
+  var lift = a.labelLift || 0;
+  ctx.font = "10px monospace";
+  ctx.textAlign = "center";
+  var tagW = ctx.measureText(a.name).width + 8;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(px - tagW / 2, headY - 14 - lift, tagW, 12);
+  ctx.fillStyle = "#fff";
+  ctx.fillText(a.name, px, headY - 5 - lift);
+
+  // Status bubble — nothing on the couch. The bubble says which tool is
+  // running, and someone who walked away from their desk is running none.
+  if (a.breakState === "lounging" || a.wanderState === "sitting") return;
+
+  var label = bubbleText(a, now);
+  ctx.font = "9px monospace";
+  var statusW = ctx.measureText(label).width + 10;
+  ctx.fillStyle = "rgba(20,20,30,0.85)";
+  ctx.strokeStyle = (a.failUntil && now < a.failUntil) ? "#e74c3c" : a.color;
+  ctx.lineWidth = 1;
+  roundRect(px - statusW / 2, headY - 32, statusW, 14, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#d8dee9";
+  ctx.fillText(label, px, headY - 22);
+}
+
+function drawPlayer() {
+  var px = player.x * TILE;
+  var py = player.y * TILE;
+
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(px, py + 12, 9, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  var bob = player.moving ? (player.animFrame % 3 === 1 ? -2 : 0) : 0;
+  var SH = player.frameH * player.scale;
+  var headY = py + bob + 16 - SH;   // feet on the tile, body grows upward
+
+  var sheet = sheetFor(player);
+  if (sheet.complete && sheet.naturalWidth > 0) {
+    var row = SPRITE_DIR_ROW[player.facing] || 0;
+    ctx.drawImage(sheet, player.animFrame * player.frameW, row * player.frameH,
+                  player.frameW, player.frameH,
+                  px - player.frameW * player.scale / 2, headY,
+                  player.frameW * player.scale, SH);
+  } else {
+    ctx.fillStyle = "#f4d58d";
+    ctx.beginPath();
+    ctx.arc(px, py + bob, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // your own plate, so a screenshot of the room says who was standing in it
+  if (player.name) {
+    ctx.font = "10px monospace";
+    ctx.textAlign = "center";
+    var tagW = ctx.measureText(player.name).width + 8;
+    ctx.fillStyle = "rgba(155,89,182,0.75)";
+    ctx.fillRect(px - tagW / 2, headY - 14, tagW, 12);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(player.name, px, headY - 5);
+  }
+
+  // what you just said, over your own head
+  if (player.say && performance.now() < player.sayUntil) {
+    ctx.font = "10px 'Courier New', monospace";
+    var txt = player.say.length > 40 ? player.say.slice(0, 39) + "…" : player.say;
+    var w = ctx.measureText(txt).width + 12;
+    var bx = px - w / 2, by = py + bob - 34;
+    ctx.fillStyle = "rgba(10,10,16,0.92)";
+    ctx.strokeStyle = "#1abc9c";
+    ctx.lineWidth = 1;
+    roundRect(bx, by, w, 16, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#d8dee9";
+    ctx.textAlign = "center";
+    ctx.fillText(txt, px, by + 11);
+    ctx.textAlign = "left";
+  } else if (player.say) {
+    player.say = null;
+  }
+}
+
+function drawDialogue() {
+  if (!dialogueOpen || !dialogueAgent) return;
+  var a = dialogueAgent;
+  var boxW = 400, boxH = 90;
+  var boxX = (CANVAS_W - boxW) / 2;
+  var boxY = CANVAS_H - boxH - 16;
+
+  ctx.fillStyle = "rgba(10,10,16,0.92)";
+  ctx.strokeStyle = a.color;
+  ctx.lineWidth = 2;
+  roundRect(boxX, boxY, boxW, boxH, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = a.color;
+  ctx.font = "bold 13px monospace";
+  ctx.fillText(a.name + "  (" + modelFor(a) + ")", boxX + 14, boxY + 22);
+
+  // the line, then the facts it was built from in small grey underneath
+  ctx.fillStyle = "#d8dee9";
+  ctx.font = "12px monospace";
+  ctx.fillText("“" + (a.line || "...") + "”", boxX + 14, boxY + 44);
+
+  var secsAgo = Math.max(0, Math.floor((performance.now() - a.lastActivity) / 1000));
+  ctx.fillStyle = "#6b7280";
+  ctx.font = "9px monospace";
+  ctx.fillText(a.currentTool + " · " + secsAgo + "s ago", boxX + 14, boxY + 64);
+  ctx.fillText("[Enter] close", boxX + 14, boxY + 78);
+}
+
+// The model under a name is the one the seat's own transcript last wrote —
+// live from /tokens, or baked into the snapshot. The seat() label is only the
+// fallback for a house that runs no ledger.
+function modelFor(a) {
+  var k = a.name.toLowerCase();
+  var live = HOUSE.seats && HOUSE.seats[k] && HOUSE.seats[k].model;
+  var snap = HOUSE.models && HOUSE.models[k];
+  return live || snap || a.model;
+}
+
+function drawEventFeed() {
+  var panelW = 220, panelH = 108;
+  // top-left: the bottom-right corner is Ox's room, and a panel sitting on it
+  // hides the one seat you have to go looking for.
+  var px = 8;
+  var py = 8;
+
+  ctx.fillStyle = "rgba(10,10,16,0.75)";
+  roundRect(px, py, panelW, panelH, 6);
+  ctx.fill();
+  ctx.strokeStyle = "#3a3f4b";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.textAlign = "left";
+  ctx.font = "9px monospace";
+  ctx.fillStyle = "#8a93a3";
+  ctx.fillText("EVENT FEED", px + 8, py + 14);
+
+  ctx.font = "8px monospace";
+  for (var i = 0; i < eventLog.length; i++) {
+    ctx.fillStyle = "#a8b1c2";
+    var line = eventLog[i];
+    if (line.length > 34) line = line.slice(0, 33) + "…";
+    ctx.fillText(line, px + 8, py + 26 + i * 10);
+  }
+}
+
+function drawMinimap() {
+  var mmW = 100, mmH = Math.round(100 * ROWS / COLS);
+  var mx = CANVAS_W - mmW - 8;
+  var my = 8;
+  var scaleX = mmW / COLS;
+  var scaleY = mmH / ROWS;
+
+  ctx.fillStyle = "rgba(10,10,16,0.75)";
+  roundRect(mx, my, mmW, mmH, 4);
+  ctx.fill();
+  ctx.strokeStyle = "#3a3f4b";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // room outline
+  ctx.fillStyle = "#2a3a2a";
+  ctx.fillRect(mx + 2, my + 2, mmW - 4, mmH - 4);
+
+  // agents
+  AGENTS.forEach(function (a) {
+    if (a.away) return;
+    ctx.fillStyle = a.color;
+    ctx.beginPath();
+    ctx.arc(mx + a.x * scaleX, my + a.y * scaleY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // player
+  ctx.fillStyle = "#f4d58d";
+  ctx.beginPath();
+  ctx.arc(mx + player.x * scaleX, my + player.y * scaleY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // test npc
+  for (var n = 0; n < NPCS.length; n++) {
+    ctx.fillStyle = NPCS[n].color;
+    ctx.beginPath();
+    ctx.arc(mx + NPCS[n].x * scaleX, my + NPCS[n].y * scaleY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ---------------------------------------------------------------
+// PC activity bars, and the server column that replaced the router
+// ---------------------------------------------------------------
+function serverRacks() {
+  return OBJECTS.filter(function (o) {
+    return (o.art || ART_FOR[o.type]) === "server_rack";
+  });
+}
+
+// The racks carry what the router used to say. They are the only thing in the
+// room that is about the house rather than one desk, so the load reading lives
+// on them: a column of light up the right wall, with pulses climbing it.
+function drawServerBeam(now) {
+  var racks = serverRacks();
+  if (!racks.length) return;
+  var load = houseLoad();
+
+  var cx = 0, top = Infinity, bot = -Infinity;
+  racks.forEach(function (r) {
+    cx += (r.x + 0.5) * TILE;
+    top = Math.min(top, (r.y - 2) * TILE);   // art is base-anchored, ~3 tiles tall
+    bot = Math.max(bot, (r.y + 1) * TILE);
+  });
+  cx /= racks.length;
+
+  var w = TILE * 1.1;
+  var g = ctx.createLinearGradient(0, top, 0, bot);
+  g.addColorStop(0, "rgba(79,209,255,0)");
+  g.addColorStop(0.5, "rgba(79,209,255," + (0.10 + load * 0.30).toFixed(3) + ")");
+  g.addColorStop(1, "rgba(79,209,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - w / 2, top, w, bot - top);
+
+  // Pulses climb the column. Never zero of them: an idle house is a quiet
+  // server, not a dead one — the rate is what carries the reading.
+  var span = bot - top;
+  var count = 3 + Math.round(load * 5);
+  var speed = 0.00006 + load * 0.00022;   // fraction of the column per ms
+  for (var i = 0; i < count; i++) {
+    var t = ((now * speed) + i / count) % 1;
+    var a = Math.sin(t * Math.PI) * (0.55 + load * 0.45);
+    if (a <= 0.01) continue;
+    var py2 = bot - t * span;
+    ctx.fillStyle = "rgba(180,240,255," + a.toFixed(3) + ")";
+    ctx.fillRect(cx - 2, py2, 4, 7);
+    ctx.fillStyle = "rgba(79,209,255," + (a * 0.4).toFixed(3) + ")";
+    ctx.fillRect(cx - 5, py2 - 3, 10, 13);
+  }
+}
+
+// The whiteboard on the back wall carries the house ledger. The number is not
+// computed here and cannot be: a PostToolUse hook has no usage figures. It is
+// posted in by tools/cost_poller.py, which imports abang's Shadow-Cost
+// Calculator rather than guessing at the same sum a second time.
+var HOUSE = { total: 0, cost: 0, calls: 0, seats: {}, seen: false };
+
+// The dollar figure is abang's household spend. True, and his to publish or
+// not — so the board shows it only when SHOW_COST is on, and the publisher
+// leaves it off. A number pushed to a public repo stays in that repo's history
+// even after the file is deleted, which is why this defaults to false.
+var SHOW_COST = false;
+
+function shortTokens(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+  return String(n);
+}
+
+function drawWhiteboard() {
+  if (!HOUSE.seen) return;   // nothing true to write yet, so write nothing
+  var board = null;
+  for (var i = 0; i < OBJECTS.length; i++) {
+    if ((OBJECTS[i].art || ART_FOR[OBJECTS[i].type]) === "whiteboard") {
+      board = OBJECTS[i];
+      break;
+    }
+  }
+  if (!board || !OBJ_MANIFEST) return;
+  var s = OBJ_MANIFEST.sprites.whiteboard;
+  if (!s) return;
+
+  // same anchoring drawAtlasSprite uses: left edge on the tile, base on it too
+  var bx = board.x * TILE;
+  var by = (board.y + 1) * TILE - s.h;
+  var cx = bx + s.w / 2;
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#5a6472";
+  ctx.font = "9px 'Courier New', monospace";
+  ctx.fillText("HOUSE LEDGER", cx, by + 22);
+
+  ctx.fillStyle = "#2b3440";
+  ctx.font = "bold 20px 'Courier New', monospace";
+  ctx.fillText(shortTokens(HOUSE.total) + " tok", cx, by + 47);
+
+  if (SHOW_COST) {
+    ctx.fillStyle = "#c0392b";
+    ctx.font = "bold 13px 'Courier New', monospace";
+    ctx.fillText("$" + Math.round(HOUSE.cost).toLocaleString(), cx, by + 65);
+  } else if (HOUSE.calls) {
+    ctx.fillStyle = "#5a6472";
+    ctx.font = "bold 12px 'Courier New', monospace";
+    ctx.fillText(HOUSE.calls.toLocaleString() + " calls", cx, by + 65);
+  }
+
+  ctx.textAlign = "left";
+}
+
+function drawPCBars() {
+  AGENTS.forEach(function (a) {
+    if (a.away) return;
+    if (a.pcX === null || a.pcY === null) return;
+    var barW = 26, barH = 4;
+    var bx = a.pcX - barW / 2;
+    var by = a.pcY + TILE / 2 + 6; // just below the PC tile
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(bx, by, barW, barH);
+    ctx.fillStyle = a.color;
+    ctx.fillRect(bx, by, barW * Math.max(0.04, a.load), barH);
+    ctx.strokeStyle = "rgba(0,0,0,0.6)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + 0.5, by + 0.5, barW - 1, barH - 1);
+  });
+}
+
+
+// ---------------------------------------------------------------
+// Editor overlays
+// ---------------------------------------------------------------
+function drawEditorOverlay(now) {
+  if (!editMode) return;
+
+  // hovered grid cell
+  if (hoverCell.x >= 0 && hoverCell.y >= 0 && hoverCell.x < COLS && hoverCell.y < ROWS) {
+    ctx.strokeStyle = "rgba(241, 196, 15, 0.9)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(hoverCell.x * TILE + 1, hoverCell.y * TILE + 1, TILE - 2, TILE - 2);
+  }
+
+  // object attached to the cursor, at half opacity
+  if (dragging) {
+    ctx.globalAlpha = 0.5;
+    drawObjectSprite(dragging, hoverCell.x * TILE, hoverCell.y * TILE, now);
+    ctx.globalAlpha = 1;
+  }
+
+  // yellow border + label
+  ctx.strokeStyle = "#f1c40f";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1.5, 1.5, CANVAS_W - 3, CANVAS_H - 3);
+
+  ctx.textAlign = "left";
+  ctx.font = "bold 11px monospace";
+  ctx.fillStyle = "rgba(10,10,16,0.85)";
+  ctx.fillRect(8, 8, 168, 30);
+  ctx.fillStyle = "#f1c40f";
+  ctx.fillText("EDIT MODE", 14, 21);
+  ctx.font = "8px monospace";
+  ctx.fillStyle = "#c9b26a";
+  ctx.fillText("click drag · right-click add · Del · S", 14, 33);
+
+  drawPalette();
+}
+
+function drawPalette() {
+  if (!palette.open) return;
+  var h = OBJECT_TYPES.length * PALETTE_ITEM_H + 8;
+
+  ctx.fillStyle = "rgba(10,10,16,0.95)";
+  roundRect(palette.x, palette.y, PALETTE_W, h, 4);
+  ctx.fill();
+  ctx.strokeStyle = "#f1c40f";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.textAlign = "left";
+  ctx.font = "9px monospace";
+  for (var i = 0; i < OBJECT_TYPES.length; i++) {
+    ctx.fillStyle = "#d8dee9";
+    ctx.fillText(OBJECT_TYPES[i], palette.x + 8, palette.y + 14 + i * PALETTE_ITEM_H);
+  }
+}
+
+// ---------------------------------------------------------------
+// Frame
+// ---------------------------------------------------------------
+function render(now) {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  drawMap();
+
+  // rugs go under everything else
+  OBJECTS.forEach(function (o) {
+    if (o.type === "rug" && o !== dragging) {
+      drawObjectSprite(o, o.x * TILE, o.y * TILE, now);
+    }
+  });
+
+
+  // objects + agents + player, depth sorted by their footing on the floor
+  var drawables = [];
+
+  OBJECTS.forEach(function (o) {
+    if (o.type === "rug" || o === dragging) return;
+    var off = DEPTH_OFFSET[o.type];
+    if (off === undefined) off = 0.9;
+    drawables.push({
+      y: o.y + off,
+      fn: function () { drawObjectSprite(o, o.x * TILE, o.y * TILE, now); }
+    });
+  });
+
+  AGENTS.forEach(function (a) {
+    if (a.away) return;   // Umbra is out on a job — nobody to draw
+    // Objects sort at y + 0.9, so an agent sitting ON the sofa at y+0.5 lands
+    // underneath its own seat and only their head shows over the backrest.
+    // Someone on the furniture draws after it.
+    var onFurniture = (a.breakState === "lounging" || a.wanderState === "sitting");
+    drawables.push({ y: a.y + (onFurniture ? 1.0 : 0), fn: function () { drawAgent(a, now); } });
+  });
+  drawables.push({ y: player.y, fn: drawPlayer });
+  NPCS.forEach(function (npc) {
+    drawables.push({ y: npc.y, fn: function () { drawNpcSprite(npc, now); } });
+  });
+
+  drawables.sort(function (a, b) { return a.y - b.y; });
+  drawables.forEach(function (d) { d.fn(); });
+
+  drawPCBars();
+  drawServerBeam(now);
+  drawWhiteboard();
+
+  // No floating "[Enter] talk" prompt. Wherever it went — the agent's head,
+  // your feet — it was a third string competing in a room that already labels
+  // every head twice. The hint line under the canvas says it once, off the art.
+
+  drawMinimap();
+  drawEventFeed();
+  drawDialogue();
+  drawEditorOverlay(now);
+}
+
+function loop(now) {
+  var dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  update(dt);
+  render(now);
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(function (now) {
+  lastTime = now;
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

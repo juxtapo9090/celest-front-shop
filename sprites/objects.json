@@ -1,0 +1,355 @@
+{
+  "tile": 32,
+  "sprites": {
+    "monitor": {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 64,
+      "frames": 12
+    },
+    "server_rack": {
+      "x": 0,
+      "y": 64,
+      "w": 32,
+      "h": 96,
+      "frames": 3
+    },
+    "screen_wall": {
+      "x": 0,
+      "y": 160,
+      "w": 128,
+      "h": 96,
+      "frames": 11
+    },
+    "coffee": {
+      "x": 0,
+      "y": 256,
+      "w": 32,
+      "h": 64,
+      "frames": 6
+    },
+    "console_unit": {
+      "x": 0,
+      "y": 320,
+      "w": 128,
+      "h": 68,
+      "frames": 1
+    },
+    "equip_cabinet": {
+      "x": 0,
+      "y": 388,
+      "w": 64,
+      "h": 58,
+      "frames": 1
+    },
+    "retro_pc": {
+      "x": 0,
+      "y": 446,
+      "w": 32,
+      "h": 24,
+      "frames": 1
+    },
+    "desk_small": {
+      "x": 0,
+      "y": 470,
+      "w": 32,
+      "h": 74,
+      "frames": 1
+    },
+    "desk_large": {
+      "x": 0,
+      "y": 544,
+      "w": 128,
+      "h": 74,
+      "frames": 1
+    },
+    "chair_up": {
+      "x": 0,
+      "y": 618,
+      "w": 32,
+      "h": 52,
+      "frames": 1
+    },
+    "chair_down": {
+      "x": 0,
+      "y": 670,
+      "w": 32,
+      "h": 52,
+      "frames": 1
+    },
+    "filing_cabinet": {
+      "x": 0,
+      "y": 722,
+      "w": 32,
+      "h": 48,
+      "frames": 1
+    },
+    "plant_small": {
+      "x": 0,
+      "y": 770,
+      "w": 32,
+      "h": 46,
+      "frames": 1
+    },
+    "plant_large": {
+      "x": 0,
+      "y": 816,
+      "w": 64,
+      "h": 60,
+      "frames": 1
+    },
+    "plant_palm": {
+      "x": 0,
+      "y": 876,
+      "w": 64,
+      "h": 62,
+      "frames": 1
+    },
+    "rug_red": {
+      "x": 0,
+      "y": 938,
+      "w": 128,
+      "h": 80,
+      "frames": 1
+    },
+    "espresso": {
+      "x": 0,
+      "y": 1018,
+      "w": 32,
+      "h": 38,
+      "frames": 1
+    },
+    "counter_left": {
+      "x": 0,
+      "y": 1056,
+      "w": 32,
+      "h": 22,
+      "frames": 1
+    },
+    "counter_mid": {
+      "x": 0,
+      "y": 1078,
+      "w": 32,
+      "h": 22,
+      "frames": 1
+    },
+    "counter_right": {
+      "x": 0,
+      "y": 1100,
+      "w": 32,
+      "h": 22,
+      "frames": 1
+    },
+    "fridge": {
+      "x": 0,
+      "y": 1122,
+      "w": 32,
+      "h": 72,
+      "frames": 1
+    },
+    "microwave": {
+      "x": 0,
+      "y": 1194,
+      "w": 32,
+      "h": 28,
+      "frames": 1
+    },
+    "stool": {
+      "x": 0,
+      "y": 1222,
+      "w": 32,
+      "h": 28,
+      "frames": 1
+    },
+    "cafe_table": {
+      "x": 0,
+      "y": 1250,
+      "w": 64,
+      "h": 28,
+      "frames": 1
+    },
+    "mug": {
+      "x": 0,
+      "y": 1278,
+      "w": 32,
+      "h": 16,
+      "frames": 1
+    },
+    "sofa_3": {
+      "x": 0,
+      "y": 1294,
+      "w": 96,
+      "h": 54,
+      "frames": 1
+    },
+    "sofa_2": {
+      "x": 0,
+      "y": 1348,
+      "w": 64,
+      "h": 52,
+      "frames": 1
+    },
+    "armchair": {
+      "x": 0,
+      "y": 1400,
+      "w": 32,
+      "h": 56,
+      "frames": 1
+    },
+    "ottoman": {
+      "x": 0,
+      "y": 1456,
+      "w": 32,
+      "h": 30,
+      "frames": 1
+    },
+    "bench": {
+      "x": 0,
+      "y": 1486,
+      "w": 76,
+      "h": 42,
+      "frames": 1
+    },
+    "bookshelf": {
+      "x": 0,
+      "y": 1528,
+      "w": 64,
+      "h": 68,
+      "frames": 1
+    },
+    "whiteboard": {
+      "x": 0,
+      "y": 1596,
+      "w": 152,
+      "h": 82,
+      "frames": 1
+    },
+    "floor_lamp": {
+      "x": 0,
+      "y": 1678,
+      "w": 32,
+      "h": 66,
+      "frames": 1
+    },
+    "rug_blue": {
+      "x": 0,
+      "y": 1744,
+      "w": 128,
+      "h": 80,
+      "frames": 1
+    },
+    "boxes_stack": {
+      "x": 0,
+      "y": 1824,
+      "w": 32,
+      "h": 50,
+      "frames": 1
+    },
+    "box_single": {
+      "x": 0,
+      "y": 1874,
+      "w": 32,
+      "h": 18,
+      "frames": 1
+    },
+    "boxes_pile": {
+      "x": 0,
+      "y": 1892,
+      "w": 32,
+      "h": 30,
+      "frames": 1
+    },
+    "plunger": {
+      "x": 0,
+      "y": 1922,
+      "w": 32,
+      "h": 34,
+      "frames": 1
+    },
+    "toolrack_hammer": {
+      "x": 0,
+      "y": 1956,
+      "w": 32,
+      "h": 38,
+      "frames": 1
+    },
+    "work_table": {
+      "x": 0,
+      "y": 1994,
+      "w": 48,
+      "h": 54,
+      "frames": 1
+    },
+    "shelving_end": {
+      "x": 0,
+      "y": 2048,
+      "w": 52,
+      "h": 72,
+      "frames": 1
+    },
+    "shelving_mid": {
+      "x": 0,
+      "y": 2120,
+      "w": 32,
+      "h": 70,
+      "frames": 1
+    },
+    "wet_floor_sign": {
+      "x": 0,
+      "y": 2190,
+      "w": 32,
+      "h": 24,
+      "frames": 1
+    },
+    "crates": {
+      "x": 0,
+      "y": 2214,
+      "w": 32,
+      "h": 56,
+      "frames": 1
+    },
+    "mop_bucket": {
+      "x": 0,
+      "y": 2270,
+      "w": 26,
+      "h": 48,
+      "frames": 1
+    },
+    "sink": {
+      "x": 0,
+      "y": 2318,
+      "w": 64,
+      "h": 64,
+      "frames": 3
+    },
+    "locker": {
+      "x": 0,
+      "y": 2382,
+      "w": 32,
+      "h": 64,
+      "frames": 10
+    },
+    "safe": {
+      "x": 0,
+      "y": 2446,
+      "w": 32,
+      "h": 64,
+      "frames": 6
+    },
+    "mop": {
+      "x": 0,
+      "y": 2510,
+      "w": 32,
+      "h": 52,
+      "frames": 1
+    },
+    "wall_clock": {
+      "x": 0,
+      "y": 2562,
+      "w": 32,
+      "h": 20,
+      "frames": 1
+    }
+  }
+}
