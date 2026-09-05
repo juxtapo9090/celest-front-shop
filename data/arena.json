@@ -1,34 +1,29 @@
 {
- "ts": 1788641120,
- "seats": [
-  {
-   "name": "Juxtapo",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1788642304,
+ "seats": [],
  "recent": [
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705"
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
   "rogue": "claude-opus-4-6",
   "juxtapo": "claude-opus-5",
   "monica": "claude-sonnet-5",
+  "fable": "claude-opus-5",
   "symphony": "claude-fable-5-1",
   "kim": "kimi-k3",
   "zet": "glm-5.3",
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14684428540,
-  "calls": 83550
+  "total": 14692905365,
+  "calls": 83642
  }
 }
