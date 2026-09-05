@@ -18,6 +18,16 @@
   canvas { image-rendering: pixelated; border: 3px solid #3a3f4b; display: block; background: #000; }
   #title { font-size: 14px; letter-spacing: 2px; color: #9b59b6; margin-bottom: 4px; }
   #hint { font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center; }
+  /* The say line sits INSIDE the room, low and centred, and is hidden until
+     Enter opens it — a box that is always there is a chat window, and the
+     point of this one is that you talk from where you are standing. */
+  #sayForm { display: none; position: absolute; left: 50%; bottom: 14px;
+             transform: translateX(-50%); width: 420px; max-width: 88%; }
+  #sayForm.on { display: block; }
+  #sayInput { width: 100%; box-sizing: border-box; padding: 7px 10px;
+              font: 12px 'Courier New', monospace; color: #d8dee9;
+              background: rgba(10,10,16,0.92); border: 1px solid #1abc9c;
+              border-radius: 5px; outline: none; }
 
   /* Chat hangs OUTSIDE the canvas, off the right edge — the bottom-right of the
      room is Ox's door, and the whole design says you have to go looking for him.
@@ -129,8 +139,10 @@
       <button type="submit">send</button>
     </form>
   </div>
+  <form id="sayForm" autocomplete="off"><input id="sayInput" maxlength="240"
+    placeholder="say something, Enter to send"></form>
 </div>
-<div id="hint">Arrow keys to move · Enter/Space near an agent to talk · E toggles edit mode · 💬 to chat</div>
+<div id="hint">Arrow keys or WASD to move · Enter to talk · E toggles edit mode · 💬 to chat</div>
 
 <div id="door"><div id="doorCard">
   <div id="doorKicker">▶ NINE AGENTS, ONE HOUSE, REAL TOOL CALLS</div>
@@ -1576,7 +1588,9 @@ var keys = {};
 function chatTyping() {
   var el = document.activeElement;
   return el === document.getElementById("chatInput") ||
+         el === document.getElementById("sayInput") ||
          el === document.getElementById("doorName") ||
+         document.getElementById("sayForm").classList.contains("on") ||
          document.getElementById("door").classList.contains("on");
 }
 
@@ -1606,7 +1620,10 @@ window.addEventListener("keydown", function (e) {
   }
 
   if (!editMode && (e.key === "Enter" || e.key === " ")) {
-    handleInteract();
+    // Only Enter falls through to the say line. Space is the interact key and
+    // nothing else — a spacebar that opens a text box is a spacebar nobody
+    // meant to press.
+    handleInteract(e.key === "Enter");
     e.preventDefault();
   }
   if (e.key.indexOf("Arrow") === 0) e.preventDefault();
@@ -1729,7 +1746,7 @@ function nearestAgentInRange() {
   return best;
 }
 
-function handleInteract() {
+function handleInteract(canSay) {
   if (dialogueOpen) {
     dialogueOpen = false;
     dialogueAgent = null;
@@ -1744,8 +1761,51 @@ function handleInteract() {
     var dx = player.x - a.x, dy = player.y - a.y;
     if (Math.abs(dx) > Math.abs(dy)) a.facing = dx > 0 ? "right" : "left";
     else a.facing = dy > 0 ? "down" : "up";
+    return;
   }
+  // Nobody in front of you, so you are talking to the room. Enter means the
+  // same thing either way — speak to whoever is there — and the room decides
+  // who that is. No second key to learn.
+  if (canSay) openSayLine();
 }
+
+// ---------------------------------------------------------------
+// The say line — talk from where you are standing
+//
+// The chat panel is a sidebar and reads like one. This is the same message
+// taking the other route: Enter, type, Enter, and it hangs over your own head
+// in the room for six seconds — which the relay already carries to everybody
+// else, because `say` rides along in the position packet.
+// ---------------------------------------------------------------
+var sayForm = document.getElementById("sayForm");
+var sayInput = document.getElementById("sayInput");
+
+function openSayLine() {
+  if (!RELAY) return;            // no relay, nowhere for it to go, so no box
+  sayForm.classList.add("on");
+  sayInput.value = "";
+  sayInput.focus();
+  keys = {};                     // a key held when focus leaves never fires its keyup
+}
+
+function closeSayLine() {
+  sayForm.classList.remove("on");
+  sayInput.blur();
+  keys = {};
+}
+
+sayForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+  var text = sayInput.value.trim();
+  closeSayLine();
+  if (!text) return;
+  speak(text);
+});
+
+sayInput.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") { closeSayLine(); e.preventDefault(); }
+  e.stopPropagation();           // typing must not drive the player behind it
+});
 
 // What an agent says when you walk up and press Enter. Every line is built from
 // a real fact — the tool that is running, how long they have been quiet, where
@@ -2176,9 +2236,17 @@ document.getElementById("chatForm").addEventListener("submit", function (e) {
   e.preventDefault();
   var text = chatInput.value.trim();
   if (!text) return;
+  chatInput.value = "";
+  speak(text);
+});
+
+// One place where a line becomes speech, whichever route it came in by — the
+// sidebar or the say line in the room. Two copies of this drifted apart once
+// already: the panel echoed your words over your head and the other route
+// would not have.
+function speak(text) {
   if (!chatName) chatName = askName();
   if (!chatName) return;
-  chatInput.value = "";
   fetch("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -2187,10 +2255,11 @@ document.getElementById("chatForm").addEventListener("submit", function (e) {
     chatLine("— message did not reach the room —", "sys");
   });
   // Your own line goes up over your head immediately; the poll will echo it
-  // back into the log a moment later like everyone else's.
+  // back into the log a moment later like everyone else's, and the relay
+  // carries it to every other visitor in the same breath.
   player.say = text;
   player.sayUntil = performance.now() + CHAT_SAY_MS;
-});
+}
 
 function pollChat() {
   var url = "/chat" + (chatMarker === null ? "" : "?since=" + chatMarker);
@@ -2351,7 +2420,7 @@ probeMode().then(function () {
   // No relay means no chat: there is nowhere for a message to go.
   chatHandle.style.display = RELAY ? "" : "none";
   var hint = document.getElementById("hint");
-  var hintKeys = "Arrow keys to move \u00b7 Enter/Space near an agent to talk"
+  var hintKeys = "Arrow keys or WASD to move \u00b7 Enter to talk"
                + " \u00b7 E toggles edit mode";
   if (MODE === "live") {
     hint.textContent = hintKeys + " \u00b7 \ud83d\udcac to chat";
@@ -2361,7 +2430,7 @@ probeMode().then(function () {
       : "an unknown time";
     // Two facts, said as two facts: the desks are a recording and the people
     // are not. Rolling them into one word would make one of them a lie.
-    hint.textContent = (RELAY ? hintKeys + " \u00b7 \ud83d\udcac to chat \u00b7 " : "Arrow keys to move \u00b7 ")
+    hint.textContent = (RELAY ? hintKeys + " \u00b7 \ud83d\udcac to chat \u00b7 " : "Arrow keys or WASD to move \u00b7 ")
                      + "DESKS ARE A SNAPSHOT \u2014 the house as it stood at "
                      + when + (RELAY ? ". Anyone else here is live." : ", not live");
   }
@@ -2406,10 +2475,14 @@ var lastTime = performance.now();
 function update(dt) {
   updatePeers(dt);
   var dx = 0, dy = 0;
-  if (keys["ArrowUp"]) dy -= 1;
-  if (keys["ArrowDown"]) dy += 1;
-  if (keys["ArrowLeft"]) dx -= 1;
-  if (keys["ArrowRight"]) dx += 1;
+  // Arrows and WASD both, because half the people who walk in reach for one
+  // and half reach for the other. `keys` is keyed by the raw event key, so a
+  // held Shift turns "w" into "W" — check both or the character stops dead
+  // mid-stride the moment somebody leans on Shift.
+  if (keys["ArrowUp"] || keys["w"] || keys["W"]) dy -= 1;
+  if (keys["ArrowDown"] || keys["s"] || keys["S"]) dy += 1;
+  if (keys["ArrowLeft"] || keys["a"] || keys["A"]) dx -= 1;
+  if (keys["ArrowRight"] || keys["d"] || keys["D"]) dx += 1;
 
   player.moving = false;
 
