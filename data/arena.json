@@ -1,20 +1,14 @@
 {
- "ts": 1788643592,
- "seats": [
-  {
-   "name": "Juxtapo",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1788644499,
+ "seats": [],
  "recent": [
-  "[Juxtapo] Read \u2705",
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] Read \u2705",
-  "[Juxtapo] Read \u2705",
   "[Juxtapo] Edit \u2705",
   "[Juxtapo] Edit \u2705",
   "[Juxtapo] Edit \u2705",
+  "[Juxtapo] mcp__mag__mag \u2705",
+  "[Juxtapo] mcp__mag__mag \u2705",
+  "[Juxtapo] mcp__mag__mag \u2705",
+  "[Juxtapo] mcp__mag__mag \u2705",
   "[Juxtapo] mcp__mag__mag \u2705"
  ],
  "models": {
@@ -29,7 +23,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14719536234,
-  "calls": 83871
+  "total": 14724663939,
+  "calls": 83903
  }
 }
