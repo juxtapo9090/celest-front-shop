@@ -1,14 +1,14 @@
 {
- "ts": 1788692547,
+ "ts": 1788693448,
  "seats": [],
  "recent": [
-  "[Monica] Bash \u2705",
-  "[Monica] ListAgents \u2705",
   "[Monica] Skill \u2705",
   "[Monica] Write \u2705",
   "[Monica] Bash \u2705",
   "[Monica] Read \u2705",
   "[Monica] Write \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Read \u2705",
   "[Monica] Bash \u2705"
  ],
  "models": {
@@ -23,7 +23,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14266312645,
-  "calls": 81522
+  "total": 14270242415,
+  "calls": 81543
  }
 }
