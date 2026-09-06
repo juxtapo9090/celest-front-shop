@@ -1,5 +1,5 @@
 {
- "ts": 1788656087,
+ "ts": 1788656516,
  "seats": [
   {
    "name": "Juxtapo",
@@ -8,13 +8,13 @@
   }
  ],
  "recent": [
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] Edit \u2705",
+  "[Juxtapo] Write \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Edit \u2705"
  ],
  "models": {
@@ -29,7 +29,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14055682309,
-  "calls": 80316
+  "total": 14058998051,
+  "calls": 80326
  }
 }
