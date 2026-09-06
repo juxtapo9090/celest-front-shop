@@ -1,14 +1,14 @@
 {
- "ts": 1788691647,
+ "ts": 1788692547,
  "seats": [],
  "recent": [
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__camera__snap \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Monica] Bash \u2705",
+  "[Monica] ListAgents \u2705",
+  "[Monica] Skill \u2705",
+  "[Monica] Write \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Read \u2705",
+  "[Monica] Write \u2705",
   "[Monica] Bash \u2705"
  ],
  "models": {
@@ -23,7 +23,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14259182057,
-  "calls": 81465
+  "total": 14266312645,
+  "calls": 81522
  }
 }
