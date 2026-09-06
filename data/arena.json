@@ -1,15 +1,15 @@
 {
- "ts": 1788670028,
+ "ts": 1788670929,
  "seats": [],
  "recent": [
-  "[Rogue] Edit \u2705",
-  "[Rogue] Bash \u2705",
-  "[Rogue] Bash \u2705",
   "[Rogue] mcp__mag__mag \u2705",
   "[Rogue] mcp__mag__mag \u2705",
   "[Rogue] mcp__mag__mag \u2705",
   "[Rogue] Bash \u2705",
-  "[Rogue] Bash \u2705"
+  "[Rogue] Bash \u2705",
+  "[Rogue] Bash \u2705",
+  "[Rogue] Bash \u2705",
+  "[Rogue] Write \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -23,7 +23,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14254991462,
-  "calls": 81410
+  "total": 14255183410,
+  "calls": 81412
  }
 }
