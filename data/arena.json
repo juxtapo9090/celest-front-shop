@@ -1,15 +1,21 @@
 {
- "ts": 1788653814,
- "seats": [],
+ "ts": 1788654714,
+ "seats": [
+  {
+   "name": "Juxtapo",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Celeste] Bash \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] Edit \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Celeste] ToolSearch \u2705",
-  "[Celeste] mcp__camera__snap \u2705",
-  "[Celeste] Read \u2705"
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Edit \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Bash \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -23,7 +29,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14001381497,
-  "calls": 80101
+  "total": 14028148838,
+  "calls": 80221
  }
 }
