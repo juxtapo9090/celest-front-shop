@@ -1,21 +1,26 @@
 {
- "ts": 1788654982,
+ "ts": 1788655615,
  "seats": [
   {
    "name": "Juxtapo",
    "present": true,
    "load": 1.0
+  },
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 0.111
   }
  ],
  "recent": [
-  "[Juxtapo] mcp__mag__mag \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Edit \u2705",
+  "[Celeste] Read \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] Edit \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705"
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Edit \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -29,7 +34,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14028148838,
-  "calls": 80221
+  "total": 14036419771,
+  "calls": 80250
  }
 }
