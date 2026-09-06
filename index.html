@@ -229,10 +229,17 @@ function buildMap() {
   PANTRY.doorY.forEach(function (y) { map[y][PANTRY.wallX] = T_DOOR; });
   OXROOM.doorY.forEach(function (y) { map[y][OXROOM.wallX] = T_DOOR; });
 
-  // entry door — bottom centre, between the two rooms
-  var doorX = Math.floor(COLS / 2);
-  map[ROWS - 1][doorX] = T_DOOR;
-  map[ROWS - 1][doorX - 1] = T_DOOR;
+  // Front entrance — TOP wall, right of centre (abang's call, 2026-09-06).
+  // It used to be bottom-centre, which dropped every arriving visitor into the
+  // middle of the lounge: you opened the page and the first thing in your face
+  // was the back of a sofa. Lucas said it out loud and the tile maths agreed —
+  // the bench is 2.4 tiles wide from x13, so it covered the doorway outright.
+  // Entering from the top means you arrive in the OFFICE and the lounge becomes
+  // somewhere you choose to walk to, which is what a lounge should be.
+  // The old bottom doorway is plain wall now.
+  var doorX = 24;
+  map[1][doorX] = T_DOOR;
+  map[1][doorX + 1] = T_DOOR;
 
   return map;
 }
@@ -342,7 +349,7 @@ function defaultObjects() {
   // --- the back wall ----------------------------------------------------
   objs.push(makeObject("screens", 9, 2));
   blockers(10, 12, 2);
-  objs.push(prop("wall_clock", 25, 1, false));     // hand-drawn: the pack has none
+  objs.push(prop("door_glass", 24, 2, false));     // the front entrance, in the top wall
 
   // whiteboard hung on the back wall, beside the screen bank
   objs.push(prop("whiteboard", 15, 2, false));
@@ -361,13 +368,13 @@ function defaultObjects() {
   objs.push(prop("sofa_3", 12, 17));
   blockers(13, 14, 17);
   objs.push(prop("bench", 13, 20, false));
-  objs.push(prop("sofa_2", 17, 18));
-  blockers(18, 18, 18);
-  // Second 2-seater on the left, mirroring the right one across the rug. Seven
-  // seats for nine agents meant two always lost and stood around looking
-  // squeezed, which reads as a bug rather than as a full room.
-  objs.push(prop("sofa_2", 9, 18));
-  blockers(10, 10, 18);
+  // A and B are SIDE-facing now, so the four pieces enclose the rug instead of
+  // queueing along it: sofa_3 looking down from the top, the bench looking up
+  // from the bottom, and these two looking inward from the sides. Abang's call.
+  // Each is 1.4 tiles wide, so it blocks its own tile and nothing else — the
+  // 0.4 of overhang lands on the rug, which is where a sofa belongs anyway.
+  objs.push(prop("sofa_side_r", 11, 19));   // A, on the left, looking right
+  objs.push(prop("sofa_side_l", 16, 19));   // B, on the right, looking left
   objs.push(prop("bookshelf", 19, 16));
   blockers(20, 20, 16);
   objs.push(prop("floor_lamp", 11, 16, false));
@@ -414,7 +421,10 @@ function defaultObjects() {
   objs.push(prop("plant_large", 22, 8));
   objs.push(prop("plant_small", 11, 8, false));
   objs.push(prop("plant_small", 21, 12, false));
-  objs.push(prop("equip_cabinet", 24, 5));         // fills the bay beside the racks
+  // The glass cabinet used to fill this bay, but the entrance is directly above
+  // it now and a visitor walking in would meet it face-first. Moved two tiles
+  // left, out of the arrival lane.
+  objs.push(prop("equip_cabinet", 22, 5));
   blockers(25, 25, 5);
   objs.push(prop("filing_cabinet", 24, 10));
   objs.push(prop("filing_cabinet", 25, 10));
@@ -1045,18 +1055,27 @@ var pantryTaken = null;
 // stood above the sofa all night. Same fix as the pantry: a few points.
 //
 // `lift` raises the name plate so neighbours on one piece don't collide.
-var LOUNGE_IN  = { x: 15.5, y: 15.6 };   // the gap between the two right-hand sofas
-var LOUNGE_LOW = { x: 15.5, y: 19.6 };   // bottom of that lane, on the rug
+var LOUNGE_IN  = { x: 15.5, y: 15.6 };   // the gap between sofa_3 and sofa B
+// 🔴 Was y=19.6, which stopped working the moment the side sofas went in: B owns
+// tile (16,19), so the run from the stools to this point crossed a solid tile and
+// two agents oscillated against the sofa's edge forever. Row 20 is bench, ottoman
+// and stools — every one of them non-solid — so the lane belongs BELOW the
+// seating, not level with it.
+var LOUNGE_LOW = { x: 15.5, y: 20.5 };   // the lane along the bottom of the lounge
 var LOUNGE_SEATS = [
   { x: 12.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 12.5, y: 16.3 }] },   // 3-seat sofa
   { x: 13.5, y: 17.5, facing: "down", lift: 13, via: [{ x: 13.5, y: 16.3 }] },
   { x: 14.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 14.5, y: 16.3 }] },
-  { x: 17.5, y: 18.5, facing: "down", lift: 0,  via: [LOUNGE_IN, { x: 17.5, y: 17.4 }] },   // right 2-seat
-  { x: 18.5, y: 18.5, facing: "down", lift: 13, via: [LOUNGE_IN, { x: 18.5, y: 17.4 }] },
+  // B — the side sofa on the right, looking left across the rug. Its cushions
+  // are the LEFT 1.4 of the sprite; the slab on the right is the backrest.
+  { x: 16.6, y: 17.7, facing: "left", lift: 0,  via: [{ x: 16.6, y: 16.4 }] },
+  { x: 16.6, y: 18.7, facing: "left", lift: 13, via: [{ x: 16.6, y: 16.4 }] },
   { x: 13.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // bench
   { x: 16.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // ottoman
-  { x: 9.5,  y: 18.5, facing: "down", lift: 0,  via: [{ x: 10.5, y: 16.4 }, { x: 9.5,  y: 17.4 }] },   // left 2-seat
-  { x: 10.5, y: 18.5, facing: "down", lift: 13, via: [{ x: 10.5, y: 16.4 }, { x: 10.5, y: 17.4 }] },
+  // A — mirror of B on the left. Its approach comes straight down x=11.5, which
+  // clears sofa_3 (tiles 12-14) on the way past.
+  { x: 11.9, y: 17.7, facing: "right", lift: 0,  via: [{ x: 11.5, y: 16.4 }] },
+  { x: 11.9, y: 18.7, facing: "right", lift: 13, via: [{ x: 11.5, y: 16.4 }] },
   { x: 18.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // stools
   { x: 19.5, y: 20.4, facing: "up",   lift: 13, via: [LOUNGE_IN, LOUNGE_LOW] }
 ];
@@ -1070,9 +1089,12 @@ var HALL = { x: 11.5, y: 13.5 };
 // to Monica's chair runs into Juxtapo's desk and slides the wrong way — pinned
 // at (4.5, 12.4), pulled left, forever. Up the gap first, then across.
 var UPPER_HALL = { x: 11.5, y: 9.5 };
-var EXIT_DOOR = { x: 14.5, y: 21.4 };     // bottom centre — the way out of the building
+var EXIT_DOOR = { x: 24.5, y: 2.6 };      // top wall, right of centre — the way out
 var OX_TO_HALL = [{ x: 22.5, y: 17.5 }, { x: 20.5, y: 17.5 }];
-var EXIT_PATH = [HALL, LOUNGE_IN, LOUNGE_LOW, EXIT_DOOR];   // hall to the front door, around the sofas
+// Up the middle to the row-9 corridor, then straight across to the door. That
+// corridor exists because the pods sit at rows 5 and 11, so row 9 is the one
+// line that crosses the whole office without touching a desk.
+var EXIT_PATH = [HALL, { x: 11.5, y: 9.5 }, { x: 24.5, y: 9.5 }, EXIT_DOOR];
 // The couch is a break, not a home. Abang's call (2026-09-06 3 AM): someone who
 // has been working stays at the desk a good while after the last call, and an
 // agent with nothing to do still ends up back in front of their own PC — the
@@ -2218,20 +2240,21 @@ function walkIn() {
 // is clear on both counts, so arrivals fill it first and then spill sideways
 // into the lane, right first — the left half of the lane is behind the bench.
 var DOOR_SPOTS = [
-  { x: 15.0, y: 21.15 }, { x: 14.5, y: 21.15 }, { x: 15.5, y: 21.15 },
-  { x: 16.6, y: 20.6 }, { x: 17.6, y: 20.6 }, { x: 18.6, y: 20.6 },
-  { x: 13.4, y: 20.6 }, { x: 12.4, y: 20.6 }, { x: 11.4, y: 20.6 }
+  { x: 24.5, y: 2.6 }, { x: 25.5, y: 2.6 },
+  { x: 23.5, y: 2.6 }, { x: 26.5, y: 2.6 },
+  { x: 24.5, y: 3.6 }, { x: 25.5, y: 3.6 }, { x: 23.5, y: 3.6 },
+  { x: 26.5, y: 3.6 }, { x: 24.5, y: 4.6 }
 ];
 function standAtTheDoor() {
   for (var i = 0; i < DOOR_SPOTS.length; i++) {
     var s = DOOR_SPOTS[i];
     if (playerCanStandAt(s.x, s.y) && !someoneStandingAt(s.x, s.y)) {
-      player.x = s.x; player.y = s.y; player.facing = "up";
+      player.x = s.x; player.y = s.y; player.facing = "down";
       return;
     }
   }
   // a genuinely full doorway: stand in it anyway and let them sort it out
-  player.x = DOOR_SPOTS[0].x; player.y = DOOR_SPOTS[0].y; player.facing = "up";
+  player.x = DOOR_SPOTS[0].x; player.y = DOOR_SPOTS[0].y; player.facing = "down";
 }
 
 function someoneStandingAt(x, y) {

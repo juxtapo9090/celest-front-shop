@@ -1,5 +1,5 @@
 {
- "ts": 1788654714,
+ "ts": 1788654773,
  "seats": [
   {
    "name": "Juxtapo",
@@ -8,14 +8,14 @@
   }
  ],
  "recent": [
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
   "[Juxtapo] Edit \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] Bash \u2705"
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Edit \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
