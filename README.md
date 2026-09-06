@@ -159,13 +159,20 @@ Then:
 
 ```bash
 export MODERN_INTERIORS=/path/to/modern-interiors-full   # where you unpacked it
+export MODERN_EXTERIORS=/path/to/modern-exteriors-full   # for the lake, outside
 python3 tools/cut_room_tiles.py     # floors and wall bands  -> sprites/room-tiles.png
 python3 tools/cut_objects.py        # furniture atlas        -> sprites/objects.png + .json
+python3 tools/cut_lake_tiles.py     # grass + animated water -> sprites/lake-tiles.png
 python3 tools/compose_character.py  # a cast member          -> sprites/<name>-sheet.png
 ```
 
 Run any of them without that variable set and they stop and tell you why, rather
 than half-building against a path that isn't there.
+
+The office is cut from **Modern Interiors**; the lake through the side door is cut
+from **Modern Exteriors**, a second pack by the same artist on the same 16px grid.
+Exteriors ships every prop pre-cut as its own PNG, so `cut_objects.py` names the
+file rather than hunting a row and column.
 
 `cut_objects.py` is the record of every prop in the room — re-run it to rebuild the
 atlas after adding one. `sprites/handmade/` is ours: a mop, a broom and a wall
@@ -179,11 +186,11 @@ art pipeline or want to compare notes, open an issue — happy to help.
 
 ## Credits
 
-Art is **LimeZu — "Modern Interiors"**, licensed, credit required; see
-[`sprites/CREDITS.md`](sprites/CREDITS.md). Characters are composed from the pack's
-own layers (body → eyes → outfit → hair → accessory) by `tools/compose_character.py`,
-with a hue-and-saturation pass that deliberately skips near-greys — recolour those
-too and a garment flattens into a blob.
+Art is **LimeZu — "Modern Interiors"** and **"Modern Exteriors"**, licensed, credit
+required; see [`sprites/CREDITS.md`](sprites/CREDITS.md). Characters are composed from
+the pack's own layers (body → eyes → outfit → hair → accessory) by
+`tools/compose_character.py`, with a hue-and-saturation pass that deliberately skips
+near-greys — recolour those too and a garment flattens into a blob.
 
 The mop, the broom and the wall clock are hand-drawn, because they genuinely do not
 exist anywhere in the pack. Both were confirmed missing by banding every row at 5×,

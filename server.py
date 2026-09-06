@@ -86,7 +86,7 @@ PEER_MAX = 48         # a room, not a stadium
 FACINGS = ("up", "down", "left", "right")
 
 _peers_lock = threading.Lock()
-_peers = {}           # id -> {id, name, body, x, y, facing, moving, say, ts}
+_peers = {}           # id -> {id, name, body, x, y, facing, moving, room, say, ts}
 
 
 def place(d):
@@ -102,6 +102,9 @@ def place(d):
         "y": round(float(d.get("y", 0)), 2),
         "facing": facing if facing in FACINGS else "down",
         "moving": bool(d.get("moving")),
+        # Which room they are standing in. The page filters on it — two visitors
+        # in different rooms should not haunt each other's map.
+        "room": "lake" if str(d.get("room", "office")) == "lake" else "office",
         "say": str(d.get("say") or "").strip()[:TEXT_MAX],
         "ts": now,
     }

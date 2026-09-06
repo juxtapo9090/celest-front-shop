@@ -185,9 +185,14 @@ ctx.imageSmoothingEnabled = false;
 var T_FLOOR = 0;
 var T_WALL = 1;
 var T_DOOR = 5;
+// Outside. The lake room is the same 30x22 grid as the office — same canvas,
+// same camera, so going out the side door swaps two arrays and nothing else.
+var T_GRASS = 6;
+var T_WATER = 7;
 
 var SOLID = {};
 SOLID[T_WALL] = true;
+SOLID[T_WATER] = true;
 
 // ---------------------------------------------------------------
 // Build the room layout
@@ -241,10 +246,54 @@ function buildMap() {
   map[1][doorX] = T_DOOR;
   map[1][doorX + 1] = T_DOOR;
 
+  // Side door — LEFT wall, between the two desk pods (abang's call, 2026-09-06).
+  // The two filing cabinets used to stand against this bay; they came out to
+  // make the opening. It leads outside, to the lake.
+  map[8][0] = T_DOOR;
+  map[9][0] = T_DOOR;
+
   return map;
 }
 
-var MAP = buildMap();
+// ---------------------------------------------------------------
+// Outside — the lake
+//
+// Same 30x22 grid as the office on purpose. The canvas is fixed at 960x704
+// with no camera, so a second room of the same size costs nothing: no camera
+// bounds, no scaling, no scroll. Going outside swaps MAP and OBJECTS and moves
+// the player. That is the whole mechanism.
+//
+// The pond is a rectangle drawn with LimeZu's 3x3 water autotile — corners,
+// edges, and a middle that repeats — so the rect can be any size and still
+// have a proper shoreline. See tools/cut_lake_tiles.py.
+// ---------------------------------------------------------------
+var LAKE = { x0: 5, x1: 20, y0: 5, y1: 14 };
+var LAKE_DOOR_Y = [8, 9];        // the office wall, on the lake's east edge
+
+function buildLakeMap() {
+  var map = [];
+  for (var y = 0; y < ROWS; y++) {
+    var row = [];
+    for (var x = 0; x < COLS; x++) row.push(T_GRASS);
+    map.push(row);
+  }
+  for (var wy = LAKE.y0; wy <= LAKE.y1; wy++) {
+    for (var wx = LAKE.x0; wx <= LAKE.x1; wx++) map[wy][wx] = T_WATER;
+  }
+  // The office is EAST of here — you came out of its left wall, so its wall is
+  // the right edge of this map, and the door back in is the same two rows.
+  for (var ey = 0; ey < ROWS; ey++) map[ey][COLS - 1] = T_WALL;
+  LAKE_DOOR_Y.forEach(function (y) { map[y][COLS - 1] = T_DOOR; });
+  return map;
+}
+
+// Which room the player is standing in, and the two maps it chooses between.
+// MAP and OBJECTS always point at the live room; everything downstream — the
+// renderer, collision, the minimap — reads them and needs no idea there are two.
+var ROOM = "office";
+var OFFICE_MAP = buildMap();
+var LAKE_MAP = buildLakeMap();
+var MAP = OFFICE_MAP;
 
 function tileTypeAt(col, row) {
   if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return T_WALL;
@@ -415,17 +464,15 @@ function defaultObjects() {
   objs.push(prop("wet_floor_sign", 26, 16, false));
 
   // --- greenery and filing, to break up the long walls ------------------
-  objs.push(makeObject("cabinet", 1, 8));
-  objs.push(makeObject("cabinet", 1, 9));
+  // The cabinets that stood in this bay are gone — the side door to the lake is
+  // punched through the wall behind them now.
   objs.push(prop("plant_palm", 1, 4));
   objs.push(prop("plant_large", 22, 8));
   objs.push(prop("plant_small", 11, 8, false));
   objs.push(prop("plant_small", 21, 12, false));
-  // The glass cabinet used to fill this bay, but the entrance is directly above
-  // it now and a visitor walking in would meet it face-first. Moved two tiles
-  // left, out of the arrival lane.
-  objs.push(prop("equip_cabinet", 22, 5));
-  blockers(25, 25, 5);
+  // The glass cabinet is gone — it read as a second front door beside the real
+  // one, and its blocker had been left behind at x25 when it moved, so there
+  // was a solid tile standing in open floor with nothing drawn on it.
   objs.push(prop("filing_cabinet", 24, 10));
   objs.push(prop("filing_cabinet", 25, 10));
 
@@ -433,6 +480,96 @@ function defaultObjects() {
 }
 
 var OBJECTS = defaultObjects();
+
+// ---------------------------------------------------------------
+// The lake's furniture. Trees ring the edges so the grass has a border that
+// isn't a wall; the shore south of the water is left open, because that is
+// where abang sits and where anyone walking up to him has to stand.
+// ---------------------------------------------------------------
+function lakeObjects() {
+  var objs = [];
+
+  // tree line along the top and bottom, thinned out so it reads as a treeline
+  // and not a fence. The right edge is the office wall, so nothing goes there.
+  [1, 4, 8, 12, 16, 20, 24].forEach(function (x, i) {
+    objs.push(prop(i % 2 ? "tree_med" : "tree_big", x, 2));
+  });
+  [2, 6, 10, 14, 18, 22, 26].forEach(function (x, i) {
+    objs.push(prop(i % 3 === 0 ? "tree_pine" : "tree_med", x, 21));
+  });
+  [1, 1, 1].forEach(function (x, i) {
+    objs.push(prop("tree_pine", x, 6 + i * 6));
+  });
+
+  // The east edge is the office wall: solid tiles with a treeline standing on
+  // them, and a gap at rows 8-9 where the door is. A tree's art runs UPWARD
+  // from its tile, so nothing is planted in the four rows above the gap or it
+  // paints over the way back in.
+  [3, 6, 13, 16, 19, 21].forEach(function (y, i) {
+    objs.push(prop(i % 2 ? "tree_med" : "tree_pine", 28, y));
+  });
+
+  // undergrowth — nothing here blocks, so the bank never wedges anybody
+  [[3, 4], [23, 6], [26, 11], [4, 17], [22, 18], [27, 3]].forEach(function (p) {
+    objs.push(prop("bush", p[0], p[1], false));
+  });
+  [[24, 15], [3, 12], [21, 20]].forEach(function (p) {
+    objs.push(prop("flower_bush", p[0], p[1], false));
+  });
+
+  // in the water: a rock and a drifting log, both already unreachable
+  objs.push(prop("sea_rock", 7, 8, false));
+  objs.push(prop("floating_wood", 17, 10, false));
+  objs.push(prop("floating_wood", 11, 6, false));
+
+  // abang's spot on the south shore — rod planted, bucket beside it
+  objs.push(prop("fishing_spot", 13, 16, false));
+  objs.push(prop("fish_bucket", 15, 16, false));
+  objs.push(prop("fish_crate", 16, 17, false));
+  objs.push(prop("wood_bench", 10, 17, false));
+
+  // somewhere to sit that isn't his spot
+  objs.push(prop("park_bench", 24, 9, false));
+
+  return objs;
+}
+
+var OFFICE_OBJECTS = OBJECTS;
+var LAKE_OBJECTS = lakeObjects();
+
+// ---------------------------------------------------------------
+// The two doorways that go somewhere. Every other T_DOOR in the building —
+// the pantry, Ox's room, the front entrance — is a hole in a wall you walk
+// through, so "any door" is the wrong trigger. These are named tiles.
+// ---------------------------------------------------------------
+var PORTALS = [
+  { room: "office", x: 0, y: 8, to: "lake", sx: 27.5, sy: 8.5, facing: "left" },
+  { room: "office", x: 0, y: 9, to: "lake", sx: 27.5, sy: 9.5, facing: "left" },
+  { room: "lake", x: COLS - 1, y: 8, to: "office", sx: 2.5, sy: 8.5, facing: "right" },
+  { room: "lake", x: COLS - 1, y: 9, to: "office", sx: 2.5, sy: 9.5, facing: "right" }
+];
+
+function enterRoom(name, sx, sy, facing) {
+  ROOM = name;
+  MAP = (name === "lake") ? LAKE_MAP : OFFICE_MAP;
+  OBJECTS = (name === "lake") ? LAKE_OBJECTS : OFFICE_OBJECTS;
+  player.x = sx;
+  player.y = sy;
+  if (facing) player.facing = facing;
+  dialogueOpen = false;
+  dialogueAgent = null;
+}
+
+function checkPortal() {
+  var col = Math.floor(player.x), row = Math.floor(player.y);
+  for (var i = 0; i < PORTALS.length; i++) {
+    var p = PORTALS[i];
+    if (p.room === ROOM && p.x === col && p.y === row) {
+      enterRoom(p.to, p.sx, p.sy, p.facing);
+      return;
+    }
+  }
+}
 
 function objectsAt(col, row) {
   return OBJECTS.filter(function (o) { return o.x === col && o.y === row; });
@@ -472,6 +609,16 @@ function isSolidTile(col, row) {
 var roomTiles = new Image();
 roomTiles.src = "sprites/room-tiles.png?v=" + Date.now();
 
+// sprites/lake-tiles.png, cut by tools/cut_lake_tiles.py:
+//   y 0..95    eight animation frames of the water autotile, frame f at x=f*96,
+//              each frame a 3x3 block — corner, edge, middle
+//   y 96..127  grass: x=0 plain, then three variants carrying a fleck of texture
+var lakeTiles = new Image();
+lakeTiles.src = "sprites/lake-tiles.png?v=" + Date.now();
+var WATER_FRAMES = 8;
+var WATER_MS = 150;
+var waterFrame = 0;
+
 function wallSlot(tx, ty) {
   var below = (ty + 1 < ROWS) ? MAP[ty + 1][tx] : T_WALL;
   if (!SOLID[below]) return 2;              // face-on: the band with the skirting
@@ -484,9 +631,15 @@ function wallSlot(tx, ty) {
 
 function drawTile(type, px, py, tx, ty) {
   var ready = roomTiles.complete && roomTiles.naturalWidth > 0;
+  var lakeReady = lakeTiles.complete && lakeTiles.naturalWidth > 0;
 
   switch (type) {
     case T_WALL:
+      // Outdoors there is no wall to draw. The map's right column is still
+      // solid — it is the edge of the world and the office is behind it — but
+      // what you see is the treeline standing on it, not a room's skirting
+      // band, which out here reads as a grey slab in a field.
+      if (ROOM === "lake") break;
       if (ready) {
         ctx.drawImage(roomTiles, wallSlot(tx, ty) * 32, 0, 32, 32, px, py, TILE, TILE);
         break;
@@ -507,6 +660,38 @@ function drawTile(type, px, py, tx, ty) {
       ctx.fillStyle = "#c9a35f";
       ctx.fillRect(px + 6, py + 2, TILE - 12, TILE - 8);
       break;
+    case T_GRASS:
+      if (lakeReady) {
+        // one plain tile plus three flecked ones, sprinkled by a fixed hash so
+        // the field has texture and does not shimmer from frame to frame
+        var gv = ((tx * 7 + ty * 13) % 11 === 0) ? 1 + ((tx + ty) % 3) : 0;
+        ctx.drawImage(lakeTiles, gv * 32, 96, 32, 32, px, py, TILE, TILE);
+        break;
+      }
+      ctx.fillStyle = "#479757";
+      ctx.fillRect(px, py, TILE, TILE);
+      break;
+    case T_WATER:
+      if (lakeReady) {
+        // which of the nine sub-tiles this is, read off the pond's own rect —
+        // edges tile, the middle repeats, so the rect can be any size
+        var wx = (tx === LAKE.x0) ? 0 : (tx === LAKE.x1) ? 2 : 1;
+        var wy = (ty === LAKE.y0) ? 0 : (ty === LAKE.y1) ? 2 : 1;
+        if (wx !== 1 && wy !== 1) {
+          // a corner: cut it at 45 degrees instead, or the pond is a pool.
+          // Band order in the sheet is NW, NE, SW, SE.
+          var band = (wy === 0 ? 0 : 2) + (wx === 0 ? 0 : 1);
+          ctx.drawImage(lakeTiles, waterFrame * 32, (4 + band) * 32, 32, 32,
+                        px, py, TILE, TILE);
+          break;
+        }
+        ctx.drawImage(lakeTiles, (waterFrame * 3 + wx) * 32, wy * 32, 32, 32,
+                      px, py, TILE, TILE);
+        break;
+      }
+      ctx.fillStyle = "#2a70a0";
+      ctx.fillRect(px, py, TILE, TILE);
+      break;
     default: // floor
       if (ready) {
         ctx.drawImage(roomTiles, 0, 0, 32, 32, px, py, TILE, TILE);
@@ -519,11 +704,16 @@ function drawTile(type, px, py, tx, ty) {
       ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
   }
 }
-
 function drawMap() {
+  waterFrame = Math.floor(performance.now() / WATER_MS) % WATER_FRAMES;
+  var outside = (ROOM === "lake");
   for (var y = 0; y < ROWS; y++) {
     for (var x = 0; x < COLS; x++) {
-      drawTile(MAP[y][x], x * TILE, y * TILE, x, y);
+      var t = MAP[y][x];
+      // outdoors the ground under everything is grass — the water's shoreline
+      // tiles and the doorway back into the office both sit on top of it
+      if (outside && t !== T_GRASS) drawTile(T_GRASS, x * TILE, y * TILE, x, y);
+      drawTile(t, x * TILE, y * TILE, x, y);
     }
   }
 }
@@ -748,6 +938,27 @@ var AGENTS = [
   seat("Umbra",    "haiku",  "#e84393", "idle",  { away: false, fieldAgent: true,
                                                    wanderState: "idle", jobUntil: 0 }),
   seat("Ox",       "haiku",  "#3498db", "idle",  { butler: true })
+];
+
+// ---------------------------------------------------------------
+// Outside, at the water. One person, standing at his rod, who is the reason
+// the side door exists. He is shaped like a seat so everything that already
+// knows how to draw and talk to an agent works on him unchanged — he just
+// never moves and never has a status.
+//
+// 🔴 HOST_PHONE is a PLACEHOLDER. It is the one string on this page that goes
+// out to strangers, so it is not something to guess — swap it for the real
+// number (or a handle, or a form link) before this is shown to anybody.
+// ---------------------------------------------------------------
+var HOST_PHONE = "01X-XXX XXXX";
+var LAKE_FOLK = [
+  seat("Abang", "human", "#f0932b", "fishing", {
+    host: true,
+    x: 12.5, y: 15.6, facing: "up",
+    sheet: "sprites/abang-sheet.png",
+    animFrame: 0, animTimer: 0, bobPhase: 0.7,
+    activity: 0, load: 0, lastActivity: performance.now()
+  })
 ];
 
 // ---------------------------------------------------------------
@@ -1773,7 +1984,8 @@ var dialogueAgent = null;
 
 function nearestAgentInRange() {
   var best = null, bestDist = 1.6;
-  AGENTS.forEach(function (a) {
+  var folk = (ROOM === "lake") ? LAKE_FOLK : AGENTS;
+  folk.forEach(function (a) {
     if (a.away) return;
     var d = Math.hypot(a.x - player.x, a.y - player.y);
     if (d < bestDist) { bestDist = d; best = a; }
@@ -1852,6 +2064,18 @@ function sayLine(a) {
   var tool = String(a.currentTool || "").toLowerCase();
   var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
 
+  // The man at the water. Everyone else in this building is a running process;
+  // he is the one you can actually hire, so his lines are the only ones that
+  // carry a phone number. HOST_PHONE is the single line to edit.
+  if (a.host) {
+    return pick([
+      "Eh, " + you + ". Ikan tak makan hari ni. Sit lah.",
+      "Nine of them in there, all mine. This is where I go when they're working.",
+      "You want one built like that? Call me — " + HOST_PHONE + ", fam.",
+      "Everything you just walked through, I made. " + HOST_PHONE + " if you need one.",
+      "Take your time. The room doesn't close."
+    ]);
+  }
   if (a.butler) {
     return pick([
       "Mind the sign, " + you + ". Floor's wet.",
@@ -2383,6 +2607,7 @@ function relayTick() {
       x: player.x, y: player.y,
       facing: player.facing,
       moving: player.moving,
+      room: ROOM,
       say: mine
     })
   }).then(function (r) { return r.json(); })
@@ -2408,6 +2633,7 @@ function applyPeers(list) {
     }
     v.tx = p.x; v.ty = p.y;
     v.facing = p.facing;
+    v.room = p.room || "office";   // an older page sends none — it only has one room
     v.reported = !!p.moving;
     v.name = p.name;
     v.sheet = p.body === "f" ? VISITOR_CAST[1].sheet : VISITOR_CAST[0].sheet;
@@ -2555,17 +2781,25 @@ function update(dt) {
   player.x = Math.max(0.6, Math.min(COLS - 0.6, player.x));
   player.y = Math.max(0.6, Math.min(ROWS - 0.6, player.y));
 
-  // decay per-agent activity (cable glow) and smooth it into load (PC bar)
-  AGENTS.forEach(function (a) {
-    a.activity = Math.max(0, a.activity - dt / 1.1);
-    a.load += (a.activity - a.load) * Math.min(1, dt * 2.5);
-  });
+  // standing in a doorway that goes somewhere takes you there
+  if (!editMode) checkPortal();
 
-  var now = performance.now();
-  updateFieldAgents(now);
+  // The office keeps running only while you are in it. Nine agents pathfinding
+  // over the lake's map would walk into the water, so the simulation waits
+  // where you left it rather than being taught about a second room.
+  if (ROOM === "office") {
+    // decay per-agent activity (cable glow) and smooth it into load (PC bar)
+    AGENTS.forEach(function (a) {
+      a.activity = Math.max(0, a.activity - dt / 1.1);
+      a.load += (a.activity - a.load) * Math.min(1, dt * 2.5);
+    });
 
-  for (var ni = 0; ni < NPCS.length; ni++) updateTestNpc(dt, NPCS[ni]);
-  updateCoffeeBreaks(dt);
+    var now = performance.now();
+    updateFieldAgents(now);
+
+    for (var ni = 0; ni < NPCS.length; ni++) updateTestNpc(dt, NPCS[ni]);
+    updateCoffeeBreaks(dt);
+  }
 }
 
 // ---------------------------------------------------------------
@@ -2810,8 +3044,9 @@ function drawMinimap() {
   ctx.fillStyle = "#2a3a2a";
   ctx.fillRect(mx + 2, my + 2, mmW - 4, mmH - 4);
 
-  // agents
-  AGENTS.forEach(function (a) {
+  // agents — whoever is in the room you are actually standing in
+  var folk = (ROOM === "lake") ? LAKE_FOLK : AGENTS;
+  folk.forEach(function (a) {
     if (a.away) return;
     ctx.fillStyle = a.color;
     ctx.beginPath();
@@ -2826,6 +3061,7 @@ function drawMinimap() {
   ctx.fill();
 
   // test npc
+  if (ROOM !== "office") return;
   for (var n = 0; n < NPCS.length; n++) {
     ctx.fillStyle = NPCS[n].color;
     ctx.beginPath();
@@ -3048,6 +3284,7 @@ function render(now) {
   });
 
   AGENTS.forEach(function (a) {
+    if (ROOM !== "office") return;   // they are in the other room; you are not
     if (a.away) return;   // Umbra is out on a job — nobody to draw
     // Objects sort at y + 0.9, so an agent sitting ON a sofa at y+0.5 lands
     // underneath its own seat and only their head shows over the backrest.
@@ -3067,20 +3304,29 @@ function render(now) {
     drawables.push({ y: sortY, fn: function () { drawAgent(a, now); } });
   });
   drawables.push({ y: player.y, fn: drawPlayer });
+  if (ROOM === "lake") {
+    LAKE_FOLK.forEach(function (a) {
+      drawables.push({ y: a.y, fn: function () { drawAgent(a, now); } });
+    });
+  }
   Object.keys(PEERS).forEach(function (id) {
     var v = PEERS[id];
+    if ((v.room || "office") !== ROOM) return;   // they are in the other room
     drawables.push({ y: v.y, fn: function () { drawVisitor(v, false); } });
   });
   NPCS.forEach(function (npc) {
+    if (ROOM !== "office") return;
     drawables.push({ y: npc.y, fn: function () { drawNpcSprite(npc, now); } });
   });
 
   drawables.sort(function (a, b) { return a.y - b.y; });
   drawables.forEach(function (d) { d.fn(); });
 
-  drawPCBars();
-  drawServerBeam(now);
-  drawWhiteboard();
+  if (ROOM === "office") {
+    drawPCBars();
+    drawServerBeam(now);
+    drawWhiteboard();
+  }
 
   // No floating "[Enter] talk" prompt. Wherever it went — the agent's head,
   // your feet — it was a third string competing in a room that already labels
