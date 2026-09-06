@@ -1,5 +1,5 @@
 {
- "ts": 1788668227,
+ "ts": 1788669127,
  "seats": [
   {
    "name": "Juxtapo",
@@ -8,12 +8,12 @@
   }
  ],
  "recent": [
-  "[Juxtapo] mcp__bravemag__bravemag \u2705",
-  "[Juxtapo] mcp__bravemag__bravemag \u2705",
-  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Rogue] mcp__mag__mag \u2705",
+  "[Rogue] mcp__mag__mag \u2705",
+  "[Rogue] mcp__mag__mag \u2705",
+  "[Rogue] mcp__mag__mag \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705"
  ],
@@ -29,7 +29,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14227714089,
-  "calls": 81276
+  "total": 14249264180,
+  "calls": 81338
  }
 }
