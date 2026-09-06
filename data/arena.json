@@ -1,26 +1,21 @@
 {
- "ts": 1788667327,
+ "ts": 1788668227,
  "seats": [
-  {
-   "name": "Rogue",
-   "present": true,
-   "load": 1.0
-  },
   {
    "name": "Juxtapo",
    "present": true,
-   "load": 0.429
+   "load": 1.0
   }
  ],
  "recent": [
-  "[Juxtapo] Write \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] mcp__bravemag__bravemag \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Rogue] Edit \u2705",
+  "[Juxtapo] Read \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Rogue] Bash \u2705",
-  "[Rogue] Bash \u2705",
-  "[Rogue] Bash \u2705",
-  "[Rogue] Bash \u2705"
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -34,7 +29,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14208032462,
-  "calls": 81211
+  "total": 14227714089,
+  "calls": 81276
  }
 }
