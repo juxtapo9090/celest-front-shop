@@ -1,23 +1,18 @@
 {
- "ts": 1788655615,
+ "ts": 1788656087,
  "seats": [
   {
    "name": "Juxtapo",
    "present": true,
    "load": 1.0
-  },
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 0.111
   }
  ],
  "recent": [
-  "[Juxtapo] Bash \u2705",
-  "[Celeste] Read \u2705",
+  "[Juxtapo] Edit \u2705",
+  "[Juxtapo] Edit \u2705",
+  "[Juxtapo] Edit \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Edit \u2705"
@@ -34,7 +29,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14036419771,
-  "calls": 80250
+  "total": 14055682309,
+  "calls": 80316
  }
 }

@@ -1055,6 +1055,11 @@ var pantryTaken = null;
 // stood above the sofa all night. Same fix as the pantry: a few points.
 //
 // `lift` raises the name plate so neighbours on one piece don't collide.
+// `lift` raises the name plate so neighbours on one piece don't collide.
+// `depth` is the sort key its sitter draws at: the piece's own sort value
+// (y + 0.9) plus a hair, so the body lands just in front of the furniture it is
+// sitting on. It is per-seat because the pieces are not the same height — the
+// side sofas are anchored two rows below their cushions.
 var LOUNGE_IN  = { x: 15.5, y: 15.6 };   // the gap between sofa_3 and sofa B
 // 🔴 Was y=19.6, which stopped working the moment the side sofas went in: B owns
 // tile (16,19), so the run from the stools to this point crossed a solid tile and
@@ -1063,21 +1068,21 @@ var LOUNGE_IN  = { x: 15.5, y: 15.6 };   // the gap between sofa_3 and sofa B
 // seating, not level with it.
 var LOUNGE_LOW = { x: 15.5, y: 20.5 };   // the lane along the bottom of the lounge
 var LOUNGE_SEATS = [
-  { x: 12.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 12.5, y: 16.3 }] },   // 3-seat sofa
-  { x: 13.5, y: 17.5, facing: "down", lift: 13, via: [{ x: 13.5, y: 16.3 }] },
-  { x: 14.5, y: 17.5, facing: "down", lift: 0,  via: [{ x: 14.5, y: 16.3 }] },
+  { x: 12.5, y: 17.5, facing: "down", lift: 0,  depth: 17.95, via: [{ x: 12.5, y: 16.3 }] },   // 3-seat sofa @ (12,17)
+  { x: 13.5, y: 17.5, facing: "down", lift: 13, depth: 17.95, via: [{ x: 13.5, y: 16.3 }] },
+  { x: 14.5, y: 17.5, facing: "down", lift: 0,  depth: 17.95, via: [{ x: 14.5, y: 16.3 }] },
   // B — the side sofa on the right, looking left across the rug. Its cushions
   // are the LEFT 1.4 of the sprite; the slab on the right is the backrest.
-  { x: 16.6, y: 17.7, facing: "left", lift: 0,  via: [{ x: 16.6, y: 16.4 }] },
-  { x: 16.6, y: 18.7, facing: "left", lift: 13, via: [{ x: 16.6, y: 16.4 }] },
-  { x: 13.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // bench
-  { x: 16.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // ottoman
+  { x: 16.6, y: 17.7, facing: "left", lift: 0,  depth: 19.95, via: [{ x: 16.6, y: 16.4 }] },   // sofa B @ (16,19)
+  { x: 16.6, y: 18.7, facing: "left", lift: 13, depth: 19.95, via: [{ x: 16.6, y: 16.4 }] },
+  { x: 13.5, y: 20.4, facing: "up",   lift: 0,  depth: 20.95, via: [LOUNGE_IN, LOUNGE_LOW] },   // bench @ (13,20)
+  { x: 16.5, y: 20.4, facing: "up",   lift: 0,  depth: 20.95, via: [LOUNGE_IN, LOUNGE_LOW] },   // ottoman @ (16,20)
   // A — mirror of B on the left. Its approach comes straight down x=11.5, which
   // clears sofa_3 (tiles 12-14) on the way past.
-  { x: 11.9, y: 17.7, facing: "right", lift: 0,  via: [{ x: 11.5, y: 16.4 }] },
-  { x: 11.9, y: 18.7, facing: "right", lift: 13, via: [{ x: 11.5, y: 16.4 }] },
-  { x: 18.5, y: 20.4, facing: "up",   lift: 0,  via: [LOUNGE_IN, LOUNGE_LOW] },   // stools
-  { x: 19.5, y: 20.4, facing: "up",   lift: 13, via: [LOUNGE_IN, LOUNGE_LOW] }
+  { x: 11.9, y: 17.7, facing: "right", lift: 0,  depth: 19.95, via: [{ x: 11.5, y: 16.4 }] },  // sofa A @ (11,19)
+  { x: 11.9, y: 18.7, facing: "right", lift: 13, depth: 19.95, via: [{ x: 11.5, y: 16.4 }] },
+  { x: 18.5, y: 20.4, facing: "up",   lift: 0,  depth: 20.95, via: [LOUNGE_IN, LOUNGE_LOW] },   // stools @ (18,20)/(19,20)
+  { x: 19.5, y: 20.4, facing: "up",   lift: 13, depth: 20.95, via: [LOUNGE_IN, LOUNGE_LOW] }
 ];
 var loungeTaken = {};        // seat index -> agent name
 // x=11.5, not 10, and the reason is measurable: row 11 has exactly one gap in
@@ -3044,11 +3049,22 @@ function render(now) {
 
   AGENTS.forEach(function (a) {
     if (a.away) return;   // Umbra is out on a job — nobody to draw
-    // Objects sort at y + 0.9, so an agent sitting ON the sofa at y+0.5 lands
+    // Objects sort at y + 0.9, so an agent sitting ON a sofa at y+0.5 lands
     // underneath its own seat and only their head shows over the backrest.
-    // Someone on the furniture draws after it.
+    //
+    // 🔴 A flat +1.0 fixed that only for sofas 2 tiles tall anchored on the
+    // seat's own row. The SIDE sofas are 2.7 tall and anchored two rows BELOW
+    // their cushions, so they sort at 19.9 while their sitter lands at
+    // 17.7 + 1.0 = 18.7 — and the agent vanishes behind the furniture
+    // completely. The seat knows which piece it belongs to, so the seat
+    // carries the answer instead of the draw loop guessing a constant.
     var onFurniture = (a.breakState === "lounging" || a.wanderState === "sitting");
-    drawables.push({ y: a.y + (onFurniture ? 1.0 : 0), fn: function () { drawAgent(a, now); } });
+    var seat = null;
+    if (a.breakState === "lounging" && a.loungeSeat >= 0) seat = LOUNGE_SEATS[a.loungeSeat];
+    else if (a.wanderState === "sitting" && a.wanderTo) seat = a.wanderTo;
+    var sortY = (seat && seat.depth != null) ? seat.depth
+                                             : a.y + (onFurniture ? 1.0 : 0);
+    drawables.push({ y: sortY, fn: function () { drawAgent(a, now); } });
   });
   drawables.push({ y: player.y, fn: drawPlayer });
   Object.keys(PEERS).forEach(function (id) {
