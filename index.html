@@ -522,10 +522,13 @@ function lakeObjects() {
   objs.push(prop("floating_wood", 17, 10, false));
   objs.push(prop("floating_wood", 11, 6, false));
 
-  // abang's spot on the south shore — rod planted, bucket beside it
-  objs.push(prop("fishing_spot", 13, 16, false));
-  objs.push(prop("fish_bucket", 15, 16, false));
-  objs.push(prop("fish_crate", 16, 17, false));
+  // abang's spot on the EAST bank — the rod planted at the water's edge with
+  // its line out over the lake, and him standing beside it looking at it.
+  // On the south shore the rod pointed along the shoreline instead of into the
+  // water, which is what gave it away.
+  objs.push(prop("fishing_spot", 20, 13, false));
+  objs.push(prop("fish_bucket", 23, 14, false));
+  objs.push(prop("fish_crate", 24, 15, false));
   objs.push(prop("wood_bench", 10, 17, false));
 
   // somewhere to sit that isn't his spot
@@ -556,8 +559,7 @@ function enterRoom(name, sx, sy, facing) {
   player.x = sx;
   player.y = sy;
   if (facing) player.facing = facing;
-  dialogueOpen = false;
-  dialogueAgent = null;
+  closeDialogue();
 }
 
 function checkPortal() {
@@ -954,7 +956,12 @@ var HOST_PHONE = "01X-XXX XXXX";
 var LAKE_FOLK = [
   seat("Abang", "human", "#f0932b", "fishing", {
     host: true,
-    x: 12.5, y: 15.6, facing: "up",
+    // The rod's art is 2 tiles wide and 4 tall, drawn upward from x20 — stand
+    // any closer and it paints over his name label, not over him.
+    x: 22.5, y: 13.6, facing: "left",
+    // where he looks when nobody is talking to him — at the water. Being
+    // spoken to turns him; closing the conversation turns him back.
+    homeFacing: "left",
     sheet: "sprites/abang-sheet.png",
     animFrame: 0, animTimer: 0, bobPhase: 0.7,
     activity: 0, load: 0, lastActivity: performance.now()
@@ -1847,7 +1854,7 @@ window.addEventListener("keydown", function (e) {
   if (e.key === "e" || e.key === "E") {
     editMode = !editMode;
     if (!editMode) { dragging = null; palette.open = false; }
-    else { dialogueOpen = false; dialogueAgent = null; }
+    else { closeDialogue(); }
     e.preventDefault();
     return;
   }
@@ -1993,10 +2000,20 @@ function nearestAgentInRange() {
   return best;
 }
 
+// One way out of a conversation, because there are three ways in — Enter, the
+// edit-mode key, and walking through a door. Whoever you were talking to goes
+// back to looking wherever they were looking before you interrupted them.
+function closeDialogue() {
+  if (dialogueAgent && dialogueAgent.homeFacing) {
+    dialogueAgent.facing = dialogueAgent.homeFacing;
+  }
+  dialogueOpen = false;
+  dialogueAgent = null;
+}
+
 function handleInteract(canSay) {
   if (dialogueOpen) {
-    dialogueOpen = false;
-    dialogueAgent = null;
+    closeDialogue();
     return;
   }
   var a = nearestAgentInRange();
@@ -2957,10 +2974,41 @@ function drawVisitor(v, mine) {
   }
 }
 
+// Break a line at word boundaries so a long one grows the box downward instead
+// of running out through its own border.
+function wrapLine(text, font, maxW) {
+  ctx.font = font;
+  var words = String(text).split(" ");
+  var lines = [], cur = "";
+  for (var i = 0; i < words.length; i++) {
+    var next = cur ? cur + " " + words[i] : words[i];
+    if (cur && ctx.measureText(next).width > maxW) {
+      lines.push(cur);
+      cur = words[i];
+    } else {
+      cur = next;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 function drawDialogue() {
   if (!dialogueOpen || !dialogueAgent) return;
   var a = dialogueAgent;
-  var boxW = 400, boxH = 90;
+  var boxW = 400;
+  var pad = 14;
+  var quoteFont = "12px monospace";
+  var lines = wrapLine("“" + (a.line || "...") + "”", quoteFont, boxW - pad * 2);
+
+  // The tool-and-seconds footer is about a running process. Abang is not one,
+  // and `a.currentTool` on him is undefined — which is exactly how it read.
+  var showTool = !a.host;
+  var lastLineY = 44 + (lines.length - 1) * 16;
+  var footerY = lastLineY + 22;
+  var closeY = footerY + (showTool ? 14 : 0);
+  var boxH = closeY + 12;
+
   var boxX = (CANVAS_W - boxW) / 2;
   var boxY = CANVAS_H - boxH - 16;
 
@@ -2974,18 +3022,22 @@ function drawDialogue() {
   ctx.textAlign = "left";
   ctx.fillStyle = a.color;
   ctx.font = "bold 13px monospace";
-  ctx.fillText(a.name + "  (" + modelFor(a) + ")", boxX + 14, boxY + 22);
+  ctx.fillText(a.name + "  (" + modelFor(a) + ")", boxX + pad, boxY + 22);
 
   // the line, then the facts it was built from in small grey underneath
   ctx.fillStyle = "#d8dee9";
-  ctx.font = "12px monospace";
-  ctx.fillText("“" + (a.line || "...") + "”", boxX + 14, boxY + 44);
+  ctx.font = quoteFont;
+  for (var i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], boxX + pad, boxY + 44 + i * 16);
+  }
 
-  var secsAgo = Math.max(0, Math.floor((performance.now() - a.lastActivity) / 1000));
   ctx.fillStyle = "#6b7280";
   ctx.font = "9px monospace";
-  ctx.fillText(a.currentTool + " · " + secsAgo + "s ago", boxX + 14, boxY + 64);
-  ctx.fillText("[Enter] close", boxX + 14, boxY + 78);
+  if (showTool) {
+    var secsAgo = Math.max(0, Math.floor((performance.now() - a.lastActivity) / 1000));
+    ctx.fillText(a.currentTool + " · " + secsAgo + "s ago", boxX + pad, boxY + footerY);
+  }
+  ctx.fillText("[Enter] close", boxX + pad, boxY + closeY);
 }
 
 // The model under a name is the one the seat's own transcript last wrote —
