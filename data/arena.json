@@ -1,26 +1,15 @@
 {
- "ts": 1788690747,
- "seats": [
-  {
-   "name": "Monica",
-   "present": true,
-   "load": 1.0
-  },
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 0.5
-  }
- ],
+ "ts": 1788691647,
+ "seats": [],
  "recent": [
-  "[Monica] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Celeste] Bash \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__camera__snap \u2705",
   "[Celeste] Read \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Read \u2705"
+  "[Monica] Bash \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -34,7 +23,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14257813963,
-  "calls": 81448
+  "total": 14259182057,
+  "calls": 81465
  }
 }
