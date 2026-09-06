@@ -962,6 +962,7 @@ var LAKE_FOLK = [
     // where he looks when nobody is talking to him — at the water. Being
     // spoken to turns him; closing the conversation turns him back.
     homeFacing: "left",
+    whistles: true,
     sheet: "sprites/abang-sheet.png",
     animFrame: 0, animTimer: 0, bobPhase: 0.7,
     activity: 0, load: 0, lastActivity: performance.now()
@@ -2085,6 +2086,12 @@ function sayLine(a) {
   // he is the one you can actually hire, so his lines are the only ones that
   // carry a phone number. HOST_PHONE is the single line to edit.
   if (a.host) {
+    // The first thing he says to anyone. He was whistling, you walked up, and
+    // the fish were right there — the pitch can wait one line.
+    if (!a.met) {
+      a.met = true;
+      return "Shhhh — you scared the fish. 🐟";
+    }
     return pick([
       "Eh, " + you + ". Ikan tak makan hari ni. Sit lah.",
       "Nine of them in there, all mine. This is where I go when they're working.",
@@ -2877,6 +2884,31 @@ function drawAgent(a, now) {
     ctx.beginPath();
     ctx.arc(px, headY + SH * 0.55, 7, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // Whistling. Two notes on the same loop, half a cycle apart, drifting up out
+  // of the top of his head. They go ABOVE the status bubble on purpose: level
+  // with him is his own name tag, and to his left is the rod, which sorts in
+  // front of him and paints straight over anything drawn there. He stops while
+  // he is talking to you, because you cannot whistle and talk.
+  if (a.whistles && !(dialogueOpen && dialogueAgent === a)) {
+    ctx.textAlign = "center";
+    for (var w = 0; w < 2; w++) {
+      var t = ((now / 1900) + w * 0.5) % 1;      // 0..1, one note's whole life
+      if (t > 0.85) continue;                    // a beat of silence between phrases
+      var rise = t / 0.85;
+      ctx.globalAlpha = Math.sin(rise * Math.PI);
+      ctx.font = (w ? "14px" : "18px") + " monospace";
+      var nx = px + (w ? 9 : -9) + rise * (w ? 7 : -7);
+      var ny = headY - 40 - rise * 20;
+      // a dark outline, or a cream note on a green field is a smudge
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(16,20,14,0.85)";
+      ctx.strokeText(w ? "♪" : "♫", nx, ny);
+      ctx.fillStyle = "#fdfcf0";
+      ctx.fillText(w ? "♪" : "♫", nx, ny);
+    }
+    ctx.globalAlpha = 1;
   }
 
   // Name tag. On the couch the seats are one tile apart and names are wider
