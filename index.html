@@ -374,6 +374,9 @@ function defaultObjects() {
   objs.push(prop("ottoman", 16, 20, false));
   objs.push(prop("stool", 18, 20, false));
   objs.push(prop("stool", 19, 20, false));
+  // The house cat, asleep on the rug. Never solid: a body you can step over
+  // cannot wedge anybody, and a cat that blocks a lane is a bug waiting.
+  objs.push(prop("cat", 13, 19, false));
 
   // --- pantry: a room you walk into, not a corner -----------------------
   objs.push(prop("counter_left", 1, 15));
@@ -587,6 +590,11 @@ function drawObjectSprite(o, px, py, now) {
     } else if (art === "server_rack") {
       // idle racks tick over slowly; a busy house makes them chatter
       frame = Math.floor(now / 1000 * (1.5 + 14 * houseLoad()));
+    } else if (art === "cat") {
+      // 36 frames of breathing and a tail flick. At the default 4fps the loop
+      // takes nine seconds and reads as slow motion; the pack's own gif is
+      // about this fast.
+      frame = Math.floor(now / 1000 * 8);
     } else {
       frame = Math.floor(now / 1000 * 4);
     }

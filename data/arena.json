@@ -1,19 +1,30 @@
 {
- "ts": 1788648100,
- "seats": [],
+ "ts": 1788653400,
+ "seats": [
+  {
+   "name": "Juxtapo",
+   "present": true,
+   "load": 1.0
+  },
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 0.6
+  }
+ ],
  "recent": [
   "[Juxtapo] Edit \u2705",
-  "[Juxtapo] Edit \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Juxtapo] mcp__mag__mag \u2705",
-  "[Symphony] Bash \u2705"
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Celeste] Bash \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
-  "rogue": "claude-opus-4-6",
+  "rogue": "claude-opus-4-8",
   "juxtapo": "claude-opus-5",
   "monica": "claude-sonnet-5",
   "fable": "claude-opus-5",
@@ -23,7 +34,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14001429712,
-  "calls": 80179
+  "total": 13993150202,
+  "calls": 80051
  }
 }
