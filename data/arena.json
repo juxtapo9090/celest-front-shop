@@ -1,15 +1,21 @@
 {
- "ts": 1788688047,
- "seats": [],
+ "ts": 1788688947,
+ "seats": [
+  {
+   "name": "Rogue",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
   "[Rogue] mcp__mag__mag \u2705",
   "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
   "[Rogue] Bash \u2705",
   "[Rogue] Bash \u2705",
   "[Rogue] Bash \u2705",
   "[Rogue] Bash \u2705",
-  "[Rogue] Write \u2705"
+  "[Rogue] Write \u2705",
+  "[Rogue] Read \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
