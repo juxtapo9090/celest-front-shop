@@ -1,6 +1,11 @@
 {
- "ts": 1788661922,
+ "ts": 1788662822,
  "seats": [
+  {
+   "name": "Rogue",
+   "present": true,
+   "load": 1.0
+  },
   {
    "name": "Juxtapo",
    "present": true,
@@ -8,14 +13,14 @@
   }
  ],
  "recent": [
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Rogue] mcp__mag__mag \u2705",
-  "[Juxtapo] SendMessage \u2705",
-  "[Juxtapo] Bash \u2705"
+  "[Rogue] Read \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Rogue] Read \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Rogue] Edit \u2705",
+  "[Rogue] Write \u2705",
+  "[Juxtapo] Skill \u2705",
+  "[Juxtapo] Write \u2705"
  ],
  "models": {
   "celeste": "claude-opus-4-6",
@@ -29,7 +34,7 @@
   "luc": "gpt-5.6-sol"
  },
  "tokens": {
-  "total": 14140136801,
-  "calls": 80831
+  "total": 14149117116,
+  "calls": 80874
  }
 }
