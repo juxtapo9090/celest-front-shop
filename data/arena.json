@@ -1,22 +1,7 @@
 {
- "ts": 1788918975,
- "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  }
- ],
- "recent": [
-  "[Monica] Skill \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] mcp__bravemag__bravemag \u2705",
-  "[Monica] mcp__bravemag__bravemag \u2705",
-  "[Monica] mcp__bravemag__bravemag \u2705",
-  "[Monica] mcp__bravemag__bravemag \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705"
- ],
+ "ts": 1788919875,
+ "seats": [],
+ "recent": [],
  "models": {},
  "tokens": {
   "total": 0,
