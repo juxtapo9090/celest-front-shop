@@ -1,15 +1,21 @@
 {
- "ts": 1788974781,
- "seats": [],
+ "ts": 1788975681,
+ "seats": [
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Symphony] Bash \u2705",
   "[Monica] ToolSearch \u2705",
   "[Monica] WebSearch \u2705",
   "[Monica] WebFetch \u2705",
   "[Monica] WebSearch \u2705",
   "[Monica] mcp__bravemag__bravemag \u2705",
   "[Monica] mcp__bravemag__bravemag \u2705",
-  "[Monica] mcp__bravemag__bravemag \u2705"
+  "[Monica] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705"
  ],
  "models": {},
  "tokens": {
