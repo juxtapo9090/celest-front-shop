@@ -1,21 +1,15 @@
 {
- "ts": 1788945978,
- "seats": [
-  {
-   "name": "Juxtapo",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1788946878,
+ "seats": [],
  "recent": [
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
   "[Juxtapo] mcp__tiledmag__tiledmag \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] mcp__tiledmag__tiledmag \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705"
+  "[Juxtapo] mcp__tiledmag__tiledmag \u2705"
  ],
  "models": {},
  "tokens": {
