@@ -1,25 +1,14 @@
 {
- "ts": 1788984683,
- "seats": [
-  {
-   "name": "Fable",
-   "present": true,
-   "load": 1.0
-  },
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 0.045
-  }
- ],
+ "ts": 1788985583,
+ "seats": [],
  "recent": [
-  "[Fable] Read \u2705",
-  "[Fable] Read \u2705",
-  "[Fable] Edit \u2705",
   "[Fable] mcp__bravemag__bravemag \u2705",
   "[Fable] Write \u2705",
   "[Fable] Write \u2705",
   "[Fable] Bash \u2705",
+  "[Celeste] Read \u2705",
+  "[Celeste] Write \u2705",
+  "[Celeste] Bash \u2705",
   "[Celeste] Read \u2705"
  ],
  "models": {},
