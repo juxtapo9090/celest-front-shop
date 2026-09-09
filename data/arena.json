@@ -1,15 +1,26 @@
 {
- "ts": 1788983783,
- "seats": [],
+ "ts": 1788984683,
+ "seats": [
+  {
+   "name": "Fable",
+   "present": true,
+   "load": 1.0
+  },
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 0.045
+  }
+ ],
  "recent": [
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] WebFetch \u2705",
-  "[Monica] WebFetch \u2705"
+  "[Fable] Read \u2705",
+  "[Fable] Read \u2705",
+  "[Fable] Edit \u2705",
+  "[Fable] mcp__bravemag__bravemag \u2705",
+  "[Fable] Write \u2705",
+  "[Fable] Write \u2705",
+  "[Fable] Bash \u2705",
+  "[Celeste] Read \u2705"
  ],
  "models": {},
  "tokens": {
