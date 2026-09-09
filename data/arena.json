@@ -1,21 +1,15 @@
 {
- "ts": 1788981082,
- "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1788981982,
+ "seats": [],
  "recent": [
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Skill \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705"
+  "[Fable] Read \u2705",
+  "[Fable] Bash \u2705",
+  "[Fable] Read \u2705",
+  "[Fable] Read \u2705",
+  "[Fable] Bash \u2705",
+  "[Fable] Skill \u2705",
+  "[Fable] Bash \u2705",
+  "[Fable] Bash \u2705"
  ],
  "models": {},
  "tokens": {
