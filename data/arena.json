@@ -1,21 +1,26 @@
 {
- "ts": 1788979282,
+ "ts": 1788980182,
  "seats": [
   {
    "name": "Juxtapo",
    "present": true,
    "load": 1.0
+  },
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 0.333
   }
  ],
  "recent": [
   "[Juxtapo] Bash \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Juxtapo] Edit \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Bash \u2705"
+  "[Juxtapo] Edit \u2705"
  ],
  "models": {},
  "tokens": {
