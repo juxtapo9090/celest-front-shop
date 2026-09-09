@@ -1,7 +1,22 @@
 {
- "ts": 1788919875,
- "seats": [],
- "recent": [],
+ "ts": 1788920775,
+ "seats": [
+  {
+   "name": "Juxtapo",
+   "present": true,
+   "load": 1.0
+  }
+ ],
+ "recent": [
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Edit \u2705"
+ ],
  "models": {},
  "tokens": {
   "total": 0,
