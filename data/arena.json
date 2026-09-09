@@ -1,29 +1,15 @@
 {
- "ts": 1788696148,
+ "ts": 1788918075,
  "seats": [],
  "recent": [
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Bash \u2705"
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Bash \u2705"
  ],
- "models": {
-  "celeste": "claude-opus-4-6",
-  "rogue": "claude-opus-4-8",
-  "juxtapo": "claude-opus-5",
-  "monica": "claude-sonnet-5",
-  "fable": "claude-opus-5",
-  "symphony": "claude-fable-5-1",
-  "kim": "kimi-k3",
-  "zet": "glm-5.3",
-  "luc": "gpt-5.6-sol"
- },
+ "models": {},
  "tokens": {
-  "total": 14272562014,
-  "calls": 81563
+  "total": 0,
+  "calls": 0
  }
 }
