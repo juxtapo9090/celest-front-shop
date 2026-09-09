@@ -1,10 +1,16 @@
 {
- "ts": 1788938777,
- "seats": [],
+ "ts": 1788939677,
+ "seats": [
+  {
+   "name": "Juxtapo",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
   "[Juxtapo] Read \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
   "[Juxtapo] Bash \u2705",
