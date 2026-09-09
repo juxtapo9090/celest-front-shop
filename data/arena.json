@@ -1,15 +1,26 @@
 {
- "ts": 1788946878,
- "seats": [],
+ "ts": 1788947778,
+ "seats": [
+  {
+   "name": "Juxtapo",
+   "present": true,
+   "load": 1.0
+  },
+  {
+   "name": "Symphony",
+   "present": true,
+   "load": 0.143
+  }
+ ],
  "recent": [
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705",
   "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705",
-  "[Juxtapo] mcp__tiledmag__tiledmag \u2705",
   "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Skill \u2705",
   "[Juxtapo] Read \u2705",
-  "[Juxtapo] mcp__tiledmag__tiledmag \u2705"
+  "[Juxtapo] Write \u2705",
+  "[Symphony] Bash \u2705",
+  "[Juxtapo] Write \u2705"
  ],
  "models": {},
  "tokens": {
