@@ -1,21 +1,21 @@
 {
- "ts": 1789062992,
+ "ts": 1789063893,
  "seats": [
   {
-   "name": "Juxtapo",
+   "name": "Umbra",
    "present": true,
    "load": 1.0
   }
  ],
  "recent": [
-  "[Celeste] ToolSearch \u2705",
-  "[Celeste] mcp__socialmag__get_feed \u2705",
-  "[Celeste] Write \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705",
-  "[Juxtapo] Bash \u2705",
-  "[Juxtapo] Read \u2705",
-  "[Juxtapo] Read \u2705"
+  "[Umbra] Read \u2705",
+  "[Umbra] Write \u2705",
+  "[Umbra] Bash \u2705",
+  "[Umbra] Edit \u2705",
+  "[Umbra] Bash \u2705",
+  "[Umbra] Read \u2705",
+  "[Umbra] Bash \u2705",
+  "[Umbra] Bash \u2705"
  ],
  "models": {},
  "tokens": {
