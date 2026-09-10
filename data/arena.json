@@ -1,31 +1,21 @@
 {
- "ts": 1789062092,
+ "ts": 1789062992,
  "seats": [
   {
-   "name": "Umbra",
-   "present": true,
-   "load": 0.667
-  },
-  {
-   "name": "Celeste",
+   "name": "Juxtapo",
    "present": true,
    "load": 1.0
-  },
-  {
-   "name": "Rogue",
-   "present": true,
-   "load": 0.667
   }
  ],
  "recent": [
-  "[Rogue] Bash \u2705",
-  "[Umbra] Write \u2705",
-  "[Umbra] Bash \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] Read \u2705",
-  "[Rogue] Read \u2705",
-  "[Rogue] Edit \u2705"
+  "[Celeste] ToolSearch \u2705",
+  "[Celeste] mcp__socialmag__get_feed \u2705",
+  "[Celeste] Write \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Bash \u2705",
+  "[Juxtapo] Read \u2705",
+  "[Juxtapo] Read \u2705"
  ],
  "models": {},
  "tokens": {
