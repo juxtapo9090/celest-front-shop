@@ -1,21 +1,15 @@
 {
- "ts": 1789072894,
- "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1789073794,
+ "seats": [],
  "recent": [
   "[Celeste] mcp__bravemag__bravemag \u2705",
+  "[Celeste] Read \u2705",
   "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Celeste] mcp__bravemag__bravemag \u2705",
   "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705",
-  "[Celeste] mcp__bravemag__bravemag \u2705"
+  "[Celeste] Read \u2705"
  ],
  "models": {},
  "tokens": {
