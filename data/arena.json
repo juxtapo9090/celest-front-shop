@@ -1,21 +1,15 @@
 {
- "ts": 1789037789,
- "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1789038689,
+ "seats": [],
  "recent": [
-  "[Celeste] WebFetch \u2705",
-  "[Celeste] WebFetch \u2705",
-  "[Celeste] WebFetch \u2705",
-  "[Celeste] WebFetch \u2705",
-  "[Celeste] WebFetch \u2705",
-  "[Celeste] Agent \u2705",
-  "[Celeste] ToolSearch \u2705",
-  "[Celeste] WebFetch \u2705"
+  "[Monica] Edit \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Write \u2705",
+  "[Monica] Write \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Write \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Read \u2705"
  ],
  "models": {},
  "tokens": {
