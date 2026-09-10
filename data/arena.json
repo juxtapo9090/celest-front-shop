@@ -1,5 +1,5 @@
 {
- "ts": 1789044089,
+ "ts": 1789044990,
  "seats": [
   {
    "name": "Celeste",
@@ -10,12 +10,12 @@
  "recent": [
   "[Celeste] Edit \u2705",
   "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
   "[Celeste] ToolSearch \u2705",
-  "[Celeste] mcp__socialmag__get_status \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] ToolSearch \u2705"
+  "[Celeste] mcp__socialmag__create_post \u2705",
+  "[Celeste] mcp__socialmag__create_post \u2705",
+  "[Celeste] Read \u2705",
+  "[Celeste] ToolSearch \u2705",
+  "[Celeste] mcp__socialmag__check_login \u2705"
  ],
  "models": {},
  "tokens": {
