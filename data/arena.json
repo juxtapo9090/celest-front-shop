@@ -1,15 +1,21 @@
 {
- "ts": 1789028788,
- "seats": [],
+ "ts": 1789029688,
+ "seats": [
+  {
+   "name": "Monica",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Fable] Write \u2705",
-  "[Fable] Read \u2705",
-  "[Fable] Bash \u2705",
   "[Fable] Edit \u2705",
   "[Fable] Edit \u2705",
   "[Monica] WebSearch \u2705",
   "[Monica] WebSearch \u2705",
-  "[Monica] WebSearch \u2705"
+  "[Monica] WebSearch \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Bash \u2705",
+  "[Monica] Bash \u2705"
  ],
  "models": {},
  "tokens": {
