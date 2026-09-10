@@ -1,21 +1,15 @@
 {
- "ts": 1789058492,
- "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  }
- ],
+ "ts": 1789059392,
+ "seats": [],
  "recent": [
-  "[Celeste] Bash \u2705",
+  "[Celeste] Edit \u2705",
   "[Celeste] Edit \u2705",
   "[Celeste] Bash \u2705",
-  "[Celeste] Edit \u2705",
   "[Celeste] Bash \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Edit \u2705"
+  "[Celeste] ToolSearch \u2705",
+  "[Celeste] mcp__socialmag__get_feed \u2705",
+  "[Celeste] mcp__socialmag__get_feed \u2705",
+  "[Celeste] mcp__socialmag__get_feed \u2705"
  ],
  "models": {},
  "tokens": {
