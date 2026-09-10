@@ -1,15 +1,21 @@
 {
- "ts": 1789038689,
- "seats": [],
+ "ts": 1789039589,
+ "seats": [
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Monica] Edit \u2705",
-  "[Monica] Bash \u2705",
-  "[Monica] Write \u2705",
   "[Monica] Write \u2705",
   "[Monica] Bash \u2705",
   "[Monica] Write \u2705",
   "[Monica] Bash \u2705",
-  "[Monica] Read \u2705"
+  "[Monica] Read \u2705",
+  "[Celeste] Bash \u2705",
+  "[Celeste] Bash \u2705",
+  "[Celeste] Bash \u2705"
  ],
  "models": {},
  "tokens": {
