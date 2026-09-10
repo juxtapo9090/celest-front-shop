@@ -1,26 +1,21 @@
 {
- "ts": 1789055791,
+ "ts": 1789056691,
  "seats": [
-  {
-   "name": "Celeste",
-   "present": true,
-   "load": 1.0
-  },
   {
    "name": "Monica",
    "present": true,
-   "load": 0.091
+   "load": 1.0
   }
  ],
  "recent": [
-  "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
   "[Monica] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Bash \u2705"
+  "[Monica] Edit \u2705",
+  "[Monica] Edit \u2705",
+  "[Monica] Edit \u2705",
+  "[Monica] Skill \u2705",
+  "[Monica] Write \u2705",
+  "[Monica] Read \u2705",
+  "[Monica] Edit \u2705"
  ],
  "models": {},
  "tokens": {
