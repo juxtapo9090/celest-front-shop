@@ -1,21 +1,21 @@
 {
- "ts": 1789063893,
+ "ts": 1789064793,
  "seats": [
   {
-   "name": "Umbra",
+   "name": "Celeste",
    "present": true,
    "load": 1.0
   }
  ],
  "recent": [
-  "[Umbra] Read \u2705",
-  "[Umbra] Write \u2705",
-  "[Umbra] Bash \u2705",
-  "[Umbra] Edit \u2705",
-  "[Umbra] Bash \u2705",
-  "[Umbra] Read \u2705",
-  "[Umbra] Bash \u2705",
-  "[Umbra] Bash \u2705"
+  "[Celeste] Bash \u2705",
+  "[Celeste] Write \u2705",
+  "[Celeste] Bash \u2705",
+  "[Celeste] Read \u2705",
+  "[Celeste] Read \u2705",
+  "[Celeste] ToolSearch \u2705",
+  "[Celeste] WebSearch \u2705",
+  "[Celeste] WebSearch \u2705"
  ],
  "models": {},
  "tokens": {
