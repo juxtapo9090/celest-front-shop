@@ -1,15 +1,21 @@
 {
- "ts": 1789042289,
- "seats": [],
+ "ts": 1789043189,
+ "seats": [
+  {
+   "name": "Celeste",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
   "[Celeste] Read \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Write \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705"
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705",
+  "[Celeste] Edit \u2705"
  ],
  "models": {},
  "tokens": {
