@@ -1,21 +1,31 @@
 {
- "ts": 1789061192,
+ "ts": 1789062092,
  "seats": [
+  {
+   "name": "Umbra",
+   "present": true,
+   "load": 0.667
+  },
   {
    "name": "Celeste",
    "present": true,
    "load": 1.0
+  },
+  {
+   "name": "Rogue",
+   "present": true,
+   "load": 0.667
   }
  ],
  "recent": [
-  "[Celeste] Edit \u2705",
+  "[Rogue] Bash \u2705",
+  "[Umbra] Write \u2705",
+  "[Umbra] Bash \u2705",
   "[Celeste] Read \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Edit \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Bash \u2705",
-  "[Celeste] Edit \u2705"
+  "[Celeste] Read \u2705",
+  "[Celeste] Read \u2705",
+  "[Rogue] Read \u2705",
+  "[Rogue] Edit \u2705"
  ],
  "models": {},
  "tokens": {
