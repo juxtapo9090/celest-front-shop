@@ -1,15 +1,21 @@
 {
- "ts": 1789053091,
- "seats": [],
+ "ts": 1789053991,
+ "seats": [
+  {
+   "name": "Symphony",
+   "present": true,
+   "load": 1.0
+  }
+ ],
  "recent": [
-  "[Celeste] mcp__socialmag__create_post \u2705",
-  "[Celeste] Write \u2705",
-  "[Celeste] Skill \u2705",
-  "[Celeste] Write \u2705",
-  "[Celeste] Bash \u2705",
   "[Celeste] Read \u2705",
-  "[Celeste] Skill \u2705",
-  "[Celeste] Write \u2705"
+  "[Celeste] Read \u2705",
+  "[Celeste] mcp__tvmag__tvmag \u2705",
+  "[Celeste] mcp__tvmag__tvmag \u2705",
+  "[Symphony] Bash \u2705",
+  "[Symphony] ToolSearch \u2705",
+  "[Symphony] Skill \u2705",
+  "[Symphony] mcp__tvmag__tvmag \u2705"
  ],
  "models": {},
  "tokens": {
