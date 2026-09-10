@@ -1,5 +1,5 @@
 {
- "ts": 1789044990,
+ "ts": 1789045890,
  "seats": [
   {
    "name": "Celeste",
@@ -12,10 +12,10 @@
   "[Celeste] Edit \u2705",
   "[Celeste] ToolSearch \u2705",
   "[Celeste] mcp__socialmag__create_post \u2705",
-  "[Celeste] mcp__socialmag__create_post \u2705",
-  "[Celeste] Read \u2705",
-  "[Celeste] ToolSearch \u2705",
-  "[Celeste] mcp__socialmag__check_login \u2705"
+  "[Celeste] Write \u2705",
+  "[Celeste] Skill \u2705",
+  "[Celeste] Write \u2705",
+  "[Celeste] Bash \u2705"
  ],
  "models": {},
  "tokens": {
